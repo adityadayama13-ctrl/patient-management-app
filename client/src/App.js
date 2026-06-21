@@ -217,6 +217,7 @@ function AppShell({ currentUser, role, onLogout }) {
   const [rolePerms, setRolePerms] = useState(loadRolePerms);
   const [license, setLicense] = useState(loadLicense);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Reload perms/license when Manage tab saves changes
   function refreshPermsAndLicense() {
@@ -368,7 +369,8 @@ function AppShell({ currentUser, role, onLogout }) {
     <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
 
       {/* ── Sidebar ── */}
-      <aside className="sidebar">
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="sidebar-brand">
           <div className="sidebar-brand-row">
             {profile.logo && profile.logoType === 'logo'
@@ -387,7 +389,7 @@ function AppShell({ currentUser, role, onLogout }) {
             <button
               key={key}
               className={tab === key ? 'nav-item active' : 'nav-item'}
-              onClick={() => setTab(key)}
+              onClick={() => { setTab(key); setSidebarOpen(false); }}
             >
               <span className="nav-item-icon">{icon}</span>
               {label}
@@ -412,6 +414,7 @@ function AppShell({ currentUser, role, onLogout }) {
       <div className="main-content">
 
         <header className="main-header">
+          <button className="hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Toggle menu">☰</button>
           <span className="main-header-title">{activeTabLabel}</span>
           <div className="main-header-actions">
             {tab === 'patients' && can(rolePerms, role, 'editPatients') && (
@@ -490,28 +493,48 @@ function AppShell({ currentUser, role, onLogout }) {
                   (p.phone  || '').toLowerCase().includes(q) ||
                   (p.email  || '').toLowerCase().includes(q);
               });
-              return filtered.length === 0
-                ? <p className="empty">No patients match "{patientSearch}".</p>
-                : (
-              <table>
-                <thead><tr><th>Name</th><th>DOB</th><th>Gender</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead>
-                <tbody>
-                  {filtered.map(p => (
-                    <tr key={p.id}>
-                      <td>{p.firstName} {p.lastName}</td><td>{p.dateOfBirth}</td><td>{p.gender}</td>
-                      <td>{p.phone || '—'}</td><td>{p.email || '—'}</td>
-                      <td>
-                        {can(rolePerms, role, 'medicalRecords') && <button onClick={() => setRecordsPatient(p)} className="btn-records">Records</button>}
-                        {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientEdit(p)} className="btn-edit">Edit</button>}
-                        {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientDelete(p.id)} className="btn-delete">Delete</button>}
-                        {can(rolePerms, role, 'whatsapp')       && <button onClick={() => setWhatsappPatient(p)} className="btn-whatsapp" title="Send WhatsApp">💬</button>}
-                        {premiumAvailable('prescriptions') && can(rolePerms, role, 'prescriptions') && <button onClick={() => setRxPatient(p)} className="btn-rx" title="Prescriptions">℞</button>}
-                        {premiumAvailable('labResults')    && can(rolePerms, role, 'labResults')    && <button onClick={() => setLabPatient(p)} className="btn-lab" title="Lab Results">🧪</button>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              if (filtered.length === 0) return <p className="empty">No patients match "{patientSearch}".</p>;
+              const PatientActions = ({ p }) => <>
+                {can(rolePerms, role, 'medicalRecords') && <button onClick={() => setRecordsPatient(p)} className="btn-records">Records</button>}
+                {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientEdit(p)} className="btn-edit">Edit</button>}
+                {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientDelete(p.id)} className="btn-delete">Delete</button>}
+                {can(rolePerms, role, 'whatsapp')       && <button onClick={() => setWhatsappPatient(p)} className="btn-whatsapp" title="Send WhatsApp">💬</button>}
+                {premiumAvailable('prescriptions') && can(rolePerms, role, 'prescriptions') && <button onClick={() => setRxPatient(p)} className="btn-rx" title="Prescriptions">℞</button>}
+                {premiumAvailable('labResults')    && can(rolePerms, role, 'labResults')    && <button onClick={() => setLabPatient(p)} className="btn-lab" title="Lab Results">🧪</button>}
+              </>;
+              return (
+                <>
+                  {/* Desktop: table */}
+                  <div className="patients-table-wrap">
+                    <table>
+                      <thead><tr><th>Name</th><th>DOB</th><th>Gender</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead>
+                      <tbody>
+                        {filtered.map(p => (
+                          <tr key={p.id}>
+                            <td>{p.firstName} {p.lastName}</td><td>{p.dateOfBirth}</td><td>{p.gender}</td>
+                            <td>{p.phone || '—'}</td><td>{p.email || '—'}</td>
+                            <td><PatientActions p={p} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Tablet / mobile: card grid */}
+                  <div className="patients-card-grid">
+                    {filtered.map(p => (
+                      <div key={p.id} className="pt-card">
+                        <div className="pt-card-name">{p.firstName} {p.lastName}</div>
+                        <div className="pt-card-meta">
+                          {p.dateOfBirth && <span className="pt-meta-item"><span className="pt-meta-label">DOB</span>{p.dateOfBirth}</span>}
+                          {p.gender      && <span className="pt-meta-item"><span className="pt-meta-label">Gender</span>{p.gender}</span>}
+                          {p.phone       && <span className="pt-meta-item"><span className="pt-meta-label">📞</span>{p.phone}</span>}
+                          {p.email       && <span className="pt-meta-item"><span className="pt-meta-label">✉</span>{p.email}</span>}
+                        </div>
+                        <div className="pt-card-actions"><PatientActions p={p} /></div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               );
             })()}
           </section>
@@ -596,23 +619,45 @@ function AppShell({ currentUser, role, onLogout }) {
           <section className="card">
             <h2>Appointments ({appointments.length})</h2>
             {appointments.length === 0 ? <p className="empty">No appointments yet.</p> : (
-              <table>
-                <thead><tr><th>Patient</th><th>Date</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody>
+              <>
+                {/* Desktop: table */}
+                <div className="appts-table-wrap">
+                  <table>
+                    <thead><tr><th>Patient</th><th>Date</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                      {appointments.map(a => (
+                        <tr key={a.id}>
+                          <td>{patientName(a.patientId)}</td>
+                          <td>{new Date(a.date).toLocaleString()}</td>
+                          <td>{a.reason || '—'}</td>
+                          <td><span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span></td>
+                          <td>
+                            <button onClick={() => handleApptEdit(a)} className="btn-edit">Edit</button>
+                            <button onClick={() => handleApptDelete(a.id)} className="btn-delete">Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Tablet / mobile: card grid */}
+                <div className="appts-card-grid">
                   {appointments.map(a => (
-                    <tr key={a.id}>
-                      <td>{patientName(a.patientId)}</td>
-                      <td>{new Date(a.date).toLocaleString()}</td>
-                      <td>{a.reason || '—'}</td>
-                      <td><span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span></td>
-                      <td>
+                    <div key={a.id} className="appt-card">
+                      <div className="appt-card-top">
+                        <span className="appt-card-patient">{patientName(a.patientId)}</span>
+                        <span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span>
+                      </div>
+                      <div className="appt-card-date">📅 {new Date(a.date).toLocaleString()}</div>
+                      {a.reason && <div className="appt-card-reason">{a.reason}</div>}
+                      <div className="appt-card-actions">
                         <button onClick={() => handleApptEdit(a)} className="btn-edit">Edit</button>
                         <button onClick={() => handleApptDelete(a.id)} className="btn-delete">Delete</button>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </>
             )}
           </section>
         </>

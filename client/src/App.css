@@ -576,6 +576,191 @@ tbody tr:nth-child(even):hover td { background: var(--border); }
 }
 .empty { color: var(--text-3); font-style: italic; padding: 0.35rem 0; }
 
+/* ══════════════════════════════════════════════
+   Tablet & Mobile responsive
+══════════════════════════════════════════════ */
+
+/* ── Hamburger button (hidden on desktop) ── */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-1);
+  font-size: 1.35rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.hamburger:hover { background: var(--surface-2); }
+
+/* ── Patient cards (hidden on desktop) ── */
+.patients-card-grid { display: none; }
+.patients-table-wrap { display: block; }
+
+/* ── Appointment cards (hidden on desktop) ── */
+.appts-card-grid { display: none; }
+.appts-table-wrap { display: block; }
+
+/* ── Sidebar backdrop (hidden on desktop) ── */
+.sidebar-backdrop { display: none; }
+
+/* ────────────────────────────────────────────
+   Tablet: 768px – 1280px
+──────────────────────────────────────────── */
+@media (max-width: 1280px) {
+
+  /* Sidebar becomes slide-in overlay */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.24s cubic-bezier(.4,0,.2,1);
+    z-index: 200;
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 6px 0 32px rgba(0,0,0,0.22);
+  }
+
+  /* Dim backdrop when sidebar open */
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 199;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Main content fills full width */
+  .main-content { margin-left: 0; }
+
+  /* Show hamburger */
+  .hamburger { display: flex; }
+
+  /* Header padding tighter */
+  .main-header { padding: 0.85rem 1.25rem; }
+  .main-body   { padding: 1.25rem 1.25rem 2rem; }
+
+  /* Hide desktop tables, show card grids */
+  .patients-table-wrap { display: none; }
+  .patients-card-grid  {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .appts-table-wrap { display: none; }
+  .appts-card-grid  {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Portrait tablet / large phone — single column cards */
+@media (max-width: 860px) {
+  .patients-card-grid,
+  .appts-card-grid { grid-template-columns: 1fr; }
+
+  .main-header { padding: 0.75rem 1rem; }
+  .main-body   { padding: 1rem 1rem 2rem; }
+}
+
+/* ── Patient card styles ── */
+.pt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.pt-card-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-1);
+}
+.pt-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+.pt-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--text-2);
+}
+.pt-meta-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 0.15rem;
+}
+.pt-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+.pt-card-actions button {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.7rem;
+}
+
+/* ── Appointment card styles ── */
+.appt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.appt-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.appt-card-patient {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-1);
+}
+.appt-card-date {
+  font-size: 0.82rem;
+  color: var(--text-2);
+}
+.appt-card-reason {
+  font-size: 0.85rem;
+  color: var(--text-2);
+  font-style: italic;
+}
+.appt-card-actions {
+  display: flex;
+  gap: 0.4rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+.appt-card-actions button {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.7rem;
+}
+
 /* ── Header user pill + logout ──────────────────────────────────── */
 .header-user-pill {
   display: flex; align-items: center; gap: 0.5rem; margin-left: 1rem;
