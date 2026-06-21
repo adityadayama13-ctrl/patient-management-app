@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Production build
+client/build/
+
+# Environment variables (keep .env.example, ignore actual .env)
+.env
+
+# Uploads (user-generated files)
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Claude Code internal
+.claude/

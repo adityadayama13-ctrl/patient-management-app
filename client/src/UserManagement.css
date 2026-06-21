@@ -1,0 +1,93 @@
+.um-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.um-add-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: 6px;
+  padding: .4rem .9rem; font-size: .85rem; cursor: pointer;
+}
+.um-add-btn:hover { opacity: .9; }
+
+.um-success {
+  background: #dcfce7; color: #166534; border: 1px solid #86efac;
+  border-radius: 6px; padding: .55rem .9rem; font-size: .85rem; margin-bottom: .75rem;
+}
+[data-theme="dark"] .um-success { background: rgba(34,197,94,.12); color: #4ade80; border-color: rgba(34,197,94,.25); }
+
+.um-form {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 1.1rem 1.25rem; margin-bottom: 1.25rem;
+  display: flex; flex-direction: column; gap: .85rem;
+}
+.um-form-title { font-weight: 700; font-size: .95rem; color: var(--text-1); }
+.um-error {
+  background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;
+  border-radius: 6px; padding: .5rem .8rem; font-size: .85rem;
+}
+[data-theme="dark"] .um-error { background: rgba(239,68,68,.15); color: #fca5a5; border-color: rgba(239,68,68,.3); }
+
+.um-form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.um-form-row .um-field { flex: 1; min-width: 160px; }
+.um-field { display: flex; flex-direction: column; gap: .3rem; }
+.um-field label { font-size: .78rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+.um-field input, .um-field select {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  padding: .5rem .7rem; font-size: .9rem; color: var(--text-1); font-family: inherit;
+  width: 100%; box-sizing: border-box;
+}
+.um-field input:focus, .um-field select:focus { outline: none; border-color: var(--accent); }
+
+.um-active-toggle { display: flex; align-items: center; gap: .5rem; font-size: .9rem; color: var(--text-2); cursor: pointer; }
+.um-active-toggle input { width: auto; cursor: pointer; }
+
+.um-form-actions { display: flex; justify-content: flex-end; gap: .65rem; }
+.um-form-actions button {
+  padding: .5rem 1.2rem; border-radius: 6px; font-size: .9rem; cursor: pointer; border: 1px solid var(--border);
+}
+.um-form-actions button[type="submit"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.um-form-actions button[type="submit"]:hover { opacity: .9; }
+.um-form-actions button.secondary { background: var(--surface-2); color: var(--text-2); }
+
+/* Table */
+.um-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-bottom: 1.5rem; }
+.um-table th {
+  background: var(--surface-2); color: var(--text-2); font-weight: 600; text-transform: uppercase;
+  font-size: .72rem; letter-spacing: .06em; padding: .6rem .75rem; text-align: left;
+  border-bottom: 2px solid var(--border);
+}
+.um-table td { padding: .65rem .75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.um-table tbody tr:hover td { background: var(--surface-2); }
+.um-row-inactive td { opacity: .5; }
+.um-username { font-family: monospace; font-size: .85rem; color: var(--text-3); }
+.um-you-badge {
+  background: var(--accent); color: #fff; border-radius: 20px;
+  font-size: .65rem; padding: .1rem .45rem; margin-left: .5rem; font-weight: 700; vertical-align: middle;
+}
+
+/* Role badges */
+.um-role-badge {
+  display: inline-block; border-radius: 20px; padding: .2rem .7rem;
+  font-size: .75rem; font-weight: 700; border: 1px solid transparent;
+}
+.role-admin        { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+.role-doctor       { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+.role-receptionist { background: #fef9c3; color: #854d0e; border-color: #fde047; }
+.role-nurse        { background: #dcfce7; color: #166534; border-color: #86efac; }
+[data-theme="dark"] .role-admin        { background: rgba(139,92,246,.15); color: #a78bfa; border-color: rgba(139,92,246,.3); }
+[data-theme="dark"] .role-doctor       { background: rgba(59,130,246,.15); color: #93c5fd; border-color: rgba(59,130,246,.3); }
+[data-theme="dark"] .role-receptionist { background: rgba(234,179,8,.1);  color: #fde047; border-color: rgba(234,179,8,.25); }
+[data-theme="dark"] .role-nurse        { background: rgba(34,197,94,.12); color: #4ade80; border-color: rgba(34,197,94,.25); }
+
+.um-status-btn {
+  border-radius: 20px; padding: .2rem .7rem; font-size: .75rem; font-weight: 700;
+  cursor: pointer; border: 1px solid transparent;
+}
+.um-status-btn.active   { background: #dcfce7; color: #166534; border-color: #86efac; }
+.um-status-btn.inactive { background: var(--surface-2); color: var(--text-3); border-color: var(--border); }
+.um-status-btn:disabled { cursor: default; opacity: .6; }
+
+.um-empty { color: var(--text-3); padding: .5rem 0; }
+
+/* Role guide */
+.um-role-guide { border-top: 1px solid var(--border); padding-top: 1rem; }
+.um-role-guide-title { font-size: .78rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .6rem; }
+.um-role-grid { display: flex; flex-direction: column; gap: .45rem; }
+.um-role-row { display: flex; align-items: center; gap: .75rem; font-size: .83rem; }
+.um-role-perm { color: var(--text-2); }

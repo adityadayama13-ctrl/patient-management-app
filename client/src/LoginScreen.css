@@ -1,0 +1,104 @@
+.login-bg {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.12);
+  overflow: hidden;
+}
+
+.login-header {
+  background: var(--sidebar-bg);
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+}
+.login-logo { width: 64px; height: 64px; object-fit: contain; border-radius: 10px; }
+.login-logo-placeholder { font-size: 3rem; line-height: 1; }
+.login-clinic-name { font-size: 1.2rem; font-weight: 700; color: var(--sidebar-text); }
+.login-clinic-sub  { font-size: .85rem; color: var(--sidebar-muted); }
+
+.login-form {
+  padding: 1.75rem 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.login-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: .25rem;
+}
+
+.login-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: .6rem .9rem;
+  font-size: .85rem;
+}
+[data-theme="dark"] .login-error { background: rgba(239,68,68,.15); color: #fca5a5; border-color: rgba(239,68,68,.3); }
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+.login-field label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.login-field input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .65rem .85rem;
+  font-size: .95rem;
+  color: var(--text-1);
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color .15s;
+}
+.login-field input:focus { outline: none; border-color: var(--accent); }
+
+.login-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: .7rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: .25rem;
+  transition: opacity .15s;
+}
+.login-btn:hover:not(:disabled) { opacity: .9; }
+.login-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+.login-footer {
+  text-align: center;
+  padding: .9rem 1.5rem 1.25rem;
+  font-size: .75rem;
+  color: var(--text-3);
+  border-top: 1px solid var(--border);
+}

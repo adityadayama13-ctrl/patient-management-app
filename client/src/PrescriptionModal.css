@@ -1,0 +1,230 @@
+/* ── Overlay & Modal ─────────────────────────────────────────────── */
+.rx-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.rx-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 820px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+
+.rx-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.rx-modal-title { font-size: 1.1rem; font-weight: 700; color: var(--text-1); }
+.rx-modal-sub   { font-size: .85rem; color: var(--text-3); margin-top: .15rem; }
+
+.rx-close {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 32px; height: 32px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rx-close:hover { background: var(--surface-2); color: var(--text-1); }
+
+/* ── List view ──────────────────────────────────────────────────── */
+.rx-list { padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: .75rem; }
+
+.rx-empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-3);
+}
+.rx-empty-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+.rx-empty { color: var(--text-3); }
+
+.rx-new-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: .4rem .85rem;
+  font-size: .85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rx-new-btn:hover { opacity: .9; }
+
+/* Prescription card */
+.rx-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .9rem 1rem;
+  background: var(--surface-2);
+}
+.rx-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.rx-card-left { display: flex; flex-direction: column; gap: .2rem; }
+.rx-card-date { font-weight: 700; color: var(--text-1); font-size: .9rem; }
+.rx-card-doctor { font-size: .8rem; color: var(--text-3); }
+.rx-card-diagnosis {
+  font-size: .85rem; color: var(--accent); font-style: italic;
+}
+.rx-card-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+.rx-btn-print, .rx-btn-edit, .rx-btn-delete {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: .25rem .6rem;
+  font-size: .78rem;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-2);
+}
+.rx-btn-print:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rx-btn-edit:hover  { background: var(--surface-2); color: var(--text-1); }
+.rx-btn-delete:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+.rx-card-drugs { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+.rx-drug-pill {
+  display: flex; align-items: center; gap: .3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: .2rem .7rem;
+  font-size: .78rem;
+}
+.rx-drug-name   { font-weight: 600; color: var(--text-1); }
+.rx-drug-detail { color: var(--text-3); }
+.rx-drug-detail:not(:last-child)::after { content: '·'; margin-left: .3rem; }
+
+.rx-card-notes { margin-top: .5rem; font-size: .8rem; color: var(--text-3); font-style: italic; }
+
+/* ── Form view ──────────────────────────────────────────────────── */
+.rx-form { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+.rx-form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.rx-form-row .rx-field { flex: 1; min-width: 180px; }
+
+.rx-field { display: flex; flex-direction: column; gap: .35rem; }
+.rx-field label { font-size: .82rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+.rx-field input, .rx-field textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .55rem .75rem;
+  font-size: .9rem;
+  color: var(--text-1);
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.rx-field input:focus, .rx-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rx-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: .6rem .9rem;
+  font-size: .85rem;
+}
+[data-theme="dark"] .rx-error { background: rgba(239,68,68,.15); color: #fca5a5; border-color: rgba(239,68,68,.3); }
+
+/* Drugs table */
+.rx-drugs-section { display: flex; flex-direction: column; gap: .5rem; }
+.rx-drugs-header { display: flex; align-items: center; justify-content: space-between; }
+.rx-section-label { font-size: .82rem; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .06em; }
+.rx-add-drug {
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: .25rem .65rem;
+  font-size: .8rem;
+  cursor: pointer;
+}
+.rx-add-drug:hover { background: var(--accent); color: #fff; }
+
+.rx-drugs-table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+
+.rx-drugs-edit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+.rx-drugs-edit-table th {
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  padding: .55rem .7rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.rx-drugs-edit-table td { padding: .45rem .5rem; vertical-align: middle; }
+.rx-drugs-edit-table tbody tr:nth-child(even) { background: var(--surface-2); }
+
+.rx-drugs-edit-table td input,
+.rx-drugs-edit-table td select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: .35rem .55rem;
+  font-size: .83rem;
+  color: var(--text-1);
+  font-family: inherit;
+  box-sizing: border-box;
+  min-width: 90px;
+}
+.rx-drugs-edit-table td input:focus,
+.rx-drugs-edit-table td select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rx-remove-drug {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--danger);
+  border-radius: 5px;
+  padding: .2rem .45rem;
+  cursor: pointer;
+  font-size: .85rem;
+}
+.rx-remove-drug:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+.rx-form-actions { display: flex; justify-content: flex-end; gap: .75rem; padding-top: .25rem; }
+.rx-form-actions button { padding: .55rem 1.4rem; border-radius: 6px; font-size: .9rem; cursor: pointer; border: 1px solid var(--border); }
+.rx-form-actions button[type="submit"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rx-form-actions button[type="submit"]:hover { opacity: .9; }
+.rx-form-actions button.secondary { background: var(--surface-2); color: var(--text-2); }
+.rx-form-actions button.secondary:hover { color: var(--text-1); }
+.rx-save-print-btn { background: var(--success) !important; color: #fff !important; border-color: var(--success) !important; }
+.rx-save-print-btn:hover { opacity: .88; }
+
