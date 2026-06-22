@@ -154,8 +154,9 @@ function loadProfile() {
 }
 
 // ── License helpers ───────────────────────────────────────────────────────────
-export function loadLicense() {
-  try { return JSON.parse(localStorage.getItem('clinicLicense')) || {}; } catch { return {}; }
+export function loadLicense() { return {}; } // kept for import compat; data now comes from DB
+export async function fetchLicenseFromDB() {
+  try { const r = await fetch('/api/license'); return r.ok ? await r.json() : {}; } catch { return {}; }
 }
 export function licenseStatus(lic) {
   if (!lic.expiryDate) return { valid: false, daysLeft: null, expired: false, noLicense: true };
@@ -215,14 +216,17 @@ function AppShell({ currentUser, role, onLogout }) {
   const [rxPatient, setRxPatient] = useState(null);
   const [labPatient, setLabPatient] = useState(null);
   const [rolePerms, setRolePerms] = useState(loadRolePerms);
-  const [license, setLicense] = useState(loadLicense);
+  const [license, setLicense] = useState({});
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Load license from DB on mount
+  useEffect(() => { fetchLicenseFromDB().then(setLicense); }, []);
+
   // Reload perms/license when Manage tab saves changes
-  function refreshPermsAndLicense() {
+  async function refreshPermsAndLicense() {
     const newPerms = loadRolePerms();
-    const newLic   = loadLicense();
+    const newLic   = await fetchLicenseFromDB();
     setRolePerms(newPerms);
     setLicense(newLic);
     // If the active tab is now hidden, fall back to patients
@@ -268,35 +272,55 @@ function AppShell({ currentUser, role, onLogout }) {
   // --- Patient handlers ---
   async function handlePatientSubmit(e) {
     e.preventDefault(); setPatientError('');
-    const url = editingPatientId ? `/api/patients/${editingPatientId}` : '/api/patients';
-    const res = await fetch(url, {
-      method: editingPatientId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patientForm),
-    });
-    if (!res.ok) { setPatientError((await res.json()).error); return; }
-    setPatientForm(EMPTY_PATIENT); setEditingPatientId(null); fetchPatients();
+    try {
+      const url = editingPatientId ? `/api/patients/${editingPatientId}` : '/api/patients';
+      const res = await fetch(url, {
+        method: editingPatientId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patientForm),
+      });
+      if (!res.ok) {
+        let msg = 'Failed to save patient.';
+        try { msg = (await res.json()).error || msg; } catch {}
+        setPatientError(msg); return;
+      }
+      setPatientForm(EMPTY_PATIENT); setEditingPatientId(null); fetchPatients();
+    } catch {
+      setPatientError('Cannot reach server — check your connection and try again.');
+    }
   }
   function handlePatientEdit(p) { setEditingPatient(p); }
   async function handlePatientDelete(id) {
     if (!window.confirm('Delete this patient?')) return;
-    const res = await fetch(`/api/patients/${id}`, { method: 'DELETE' });
-    if (!res.ok) { alert('Failed to delete patient. They may have linked records or bills.'); return; }
-    fetchPatients();
+    try {
+      const res = await fetch(`/api/patients/${id}`, { method: 'DELETE' });
+      if (!res.ok) { alert('Failed to delete patient. They may have linked records or bills.'); return; }
+      fetchPatients();
+    } catch {
+      alert('Cannot reach server — check your connection and try again.');
+    }
   }
 
   // --- Appointment handlers ---
   async function handleApptSubmit(e) {
     e.preventDefault(); setApptError('');
-    const date = apptForm.apptSlot ? `${apptForm.apptDate}T${apptForm.apptSlot}` : apptForm.apptDate;
-    const url = editingApptId ? `/api/appointments/${editingApptId}` : '/api/appointments';
-    const res = await fetch(url, {
-      method: editingApptId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...apptForm, date }),
-    });
-    if (!res.ok) { setApptError((await res.json()).error); return; }
-    setApptForm(EMPTY_APPT); setEditingApptId(null); fetchAppointments();
+    try {
+      const date = apptForm.apptSlot ? `${apptForm.apptDate}T${apptForm.apptSlot}` : apptForm.apptDate;
+      const url = editingApptId ? `/api/appointments/${editingApptId}` : '/api/appointments';
+      const res = await fetch(url, {
+        method: editingApptId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...apptForm, date }),
+      });
+      if (!res.ok) {
+        let msg = 'Failed to save appointment.';
+        try { msg = (await res.json()).error || msg; } catch {}
+        setApptError(msg); return;
+      }
+      setApptForm(EMPTY_APPT); setEditingApptId(null); fetchAppointments();
+    } catch {
+      setApptError('Cannot reach server — check your connection and try again.');
+    }
   }
   function handleApptEdit(a) {
     setEditingApptId(a.id);
@@ -318,9 +342,13 @@ function AppShell({ currentUser, role, onLogout }) {
   }
   async function handleApptDelete(id) {
     if (!window.confirm('Delete this appointment?')) return;
-    const res = await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
-    if (!res.ok) { alert('Failed to delete appointment.'); return; }
-    fetchAppointments();
+    try {
+      const res = await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
+      if (!res.ok) { alert('Failed to delete appointment.'); return; }
+      fetchAppointments();
+    } catch {
+      alert('Cannot reach server — check your connection and try again.');
+    }
   }
 
   // --- Clinic config ---
@@ -499,7 +527,7 @@ function AppShell({ currentUser, role, onLogout }) {
                   (p.email  || '').toLowerCase().includes(q);
               });
               if (filtered.length === 0) return <p className="empty">No patients match "{patientSearch}".</p>;
-              const PatientActions = ({ p }) => <>
+              const patientActions = (p) => <>
                 {can(rolePerms, role, 'medicalRecords') && <button onClick={() => setRecordsPatient(p)} className="btn-records">Records</button>}
                 {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientEdit(p)} className="btn-edit">Edit</button>}
                 {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientDelete(p.id)} className="btn-delete">Delete</button>}
@@ -518,7 +546,7 @@ function AppShell({ currentUser, role, onLogout }) {
                           <tr key={p.id}>
                             <td>{p.firstName} {p.lastName}</td><td>{p.dateOfBirth}</td><td>{p.gender}</td>
                             <td>{p.phone || '—'}</td><td>{p.email || '—'}</td>
-                            <td><PatientActions p={p} /></td>
+                            <td>{patientActions(p)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -535,7 +563,7 @@ function AppShell({ currentUser, role, onLogout }) {
                           {p.phone       && <span className="pt-meta-item"><span className="pt-meta-label">📞</span>{p.phone}</span>}
                           {p.email       && <span className="pt-meta-item"><span className="pt-meta-label">✉</span>{p.email}</span>}
                         </div>
-                        <div className="pt-card-actions"><PatientActions p={p} /></div>
+                        <div className="pt-card-actions">{patientActions(p)}</div>
                       </div>
                     ))}
                   </div>

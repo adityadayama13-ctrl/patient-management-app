@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const axios = require('axios');
 const cron = require('node-cron');
-const { Patient, Appointment, MedicalRecord, Bill, PaymentLog, ServiceCatalog, WhatsappConfig, Prescription, LabResult, User } = require('./models');
+const { Patient, Appointment, MedicalRecord, Bill, PaymentLog, ServiceCatalog, WhatsappConfig, Prescription, LabResult, User, License } = require('./models');
 const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -24,6 +24,22 @@ const labStorage = multer.diskStorage({
 });
 const labUpload = multer({ storage: labStorage, limits: { fileSize: 20 * 1024 * 1024 } });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ── License (singleton row, id = 1) ──────────────────────────────────────────
+app.get('/api/license', async (req, res) => {
+  try {
+    const row = await License.findByPk(1);
+    res.json(row ? row.toJSON() : {});
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/license', async (req, res) => {
+  try {
+    const { licensedTo, referenceCode, startDate, expiryDate, features } = req.body;
+    const [row] = await License.upsert({ id: 1, licensedTo, referenceCode, startDate: startDate || null, expiryDate: expiryDate || null, features: features || {} });
+    res.json(row.toJSON());
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // GET all patients
 app.get('/api/patients', async (req, res) => {
@@ -627,7 +643,11 @@ app.delete('/api/users/:id', async (req, res) => {
 const buildPath = path.join(__dirname, 'client', 'build');
 app.use(express.static(buildPath));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(buildPath, 'index.html'));
+  const indexPath = path.join(buildPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(503).send('Frontend not built. Run: cd client && npm run build');
+  }
+  res.sendFile(indexPath);
 });
 
 const { sequelize } = require('./models');

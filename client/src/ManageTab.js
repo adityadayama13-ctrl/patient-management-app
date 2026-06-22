@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PERMISSION_FEATURES, DEFAULT_ROLE_PERMS, loadRolePerms, loadLicense, licenseStatus } from './App';
+import { PERMISSION_FEATURES, DEFAULT_ROLE_PERMS, loadRolePerms, licenseStatus } from './App';
 import './ManageTab.css';
 
 const ROLES = ['Admin', 'Doctor', 'Receptionist', 'Nurse'];
@@ -232,15 +232,33 @@ function RolePermissionsSection({ onSaved }) {
 
 // ── Licensing sub-section ─────────────────────────────────────────────────────
 function LicensingSection({ onSaved }) {
-  const [lic, setLic]     = useState(loadLicense);
-  const [saved, setSaved] = useState(false);
+  const [lic, setLic]       = useState({});
+  const [saved, setSaved]   = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError]   = useState('');
   const status = licenseStatus(lic);
 
-  function save(e) {
-    e.preventDefault();
-    localStorage.setItem('clinicLicense', JSON.stringify(lic));
-    setSaved(true); setTimeout(() => setSaved(false), 2000);
-    onSaved();
+  useEffect(() => {
+    fetch('/api/license')
+      .then(r => r.ok ? r.json() : {})
+      .then(data => setLic(data || {}))
+      .catch(() => {});
+  }, []);
+
+  async function save(e) {
+    e.preventDefault(); setError(''); setSaving(true);
+    try {
+      const res = await fetch('/api/license', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lic),
+      });
+      if (!res.ok) { const d = await res.json(); setError(d.error || 'Failed to save.'); return; }
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+      onSaved();
+    } catch {
+      setError('Cannot reach server — check your connection.');
+    } finally { setSaving(false); }
   }
 
   function statusBadge() {
@@ -318,8 +336,9 @@ function LicensingSection({ onSaved }) {
           ))}
         </div>
 
+        {error && <p className="error" style={{ marginTop: '0.5rem' }}>{error}</p>}
         <div className="mg-save-row">
-          <button type="submit" className="mg-save-btn">Save License</button>
+          <button type="submit" className="mg-save-btn" disabled={saving}>{saving ? 'Saving…' : 'Save License'}</button>
           {saved && <span className="mg-saved-msg">Saved!</span>}
         </div>
       </form>
