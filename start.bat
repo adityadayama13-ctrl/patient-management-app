@@ -57,14 +57,19 @@ for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
 set IP=%RAW: =%
 
 echo.
+:: Get hostname for mDNS URL
+for /f %%H in ('hostname') do set HOSTNAME=%%H
+
 echo ============================================
 echo   App is running!
 echo.
-echo   This PC:    http://localhost:5000
-echo   Network:    http://%IP%:5000
+echo   This PC:      http://localhost:5000
+echo   Clinic URL:   http://%HOSTNAME%.local:5000
+echo   By IP:        http://%IP%:5000
 echo.
-echo   Share the Network address with clinic
-echo   staff on the same WiFi.
+echo   Use the Clinic URL on any phone, tablet,
+echo   or PC connected to the same WiFi.
+echo   (Use the IP address for Android devices)
 echo.
 echo   Press Ctrl+C to stop the server.
 echo ============================================

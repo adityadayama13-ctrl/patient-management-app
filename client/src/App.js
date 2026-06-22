@@ -245,6 +245,11 @@ function AppShell({ currentUser, role, onLogout }) {
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
 
+  // Keep browser tab title in sync with clinic name from profile
+  useEffect(() => {
+    document.title = profile.name ? `${profile.name}` : 'Clinic';
+  }, [profile.name]);
+
   useEffect(() => { fetchPatients(); fetchAppointments(); }, []);
 
   async function fetchPatients() {
