@@ -4,7 +4,8 @@ const cors = require('cors');
 const path = require('path');
 const axios = require('axios');
 const cron = require('node-cron');
-const { Patient, Appointment, MedicalRecord, Bill, PaymentLog, ServiceCatalog, WhatsappConfig, Prescription, LabResult, User, License } = require('./models');
+const { Patient, Appointment, MedicalRecord, Bill, PaymentLog, ServiceCatalog, WhatsappConfig, Prescription, LabResult, User, License, sequelize: _seq } = require('./models');
+const { Op } = require('sequelize');
 const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -524,6 +525,70 @@ app.post('/api/whatsapp/send', async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.response?.data?.error?.message || err.message });
   }
+});
+
+// POST preview broadcast — count matching patients (no messages sent)
+app.post('/api/whatsapp/broadcast/preview', async (req, res) => {
+  try {
+    const { filter = {} } = req.body;
+    const where = { phone: { [Op.not]: null, [Op.ne]: '' } };
+    if (filter.gender) where.gender = filter.gender;
+    const patients = await Patient.findAll({ where, attributes: ['dateOfBirth'] });
+    const today = new Date();
+    const count = patients.filter(p => {
+      if (filter.minAge || filter.maxAge) {
+        if (!p.dateOfBirth) return false;
+        const age = Math.floor((today - new Date(p.dateOfBirth)) / (365.25 * 24 * 3600 * 1000));
+        if (filter.minAge && age < Number(filter.minAge)) return false;
+        if (filter.maxAge && age > Number(filter.maxAge)) return false;
+      }
+      return true;
+    }).length;
+    res.json({ count });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST send broadcast to filtered patients
+app.post('/api/whatsapp/broadcast', async (req, res) => {
+  try {
+    const cfg = await WhatsappConfig.findOne();
+    if (!cfg?.enabled) return res.status(400).json({ error: 'WhatsApp integration is disabled.' });
+    if (!cfg.phoneNumberId || !cfg.accessToken)
+      return res.status(400).json({ error: 'WhatsApp credentials not configured.' });
+    const { templateName, includePatientName, filter = {} } = req.body;
+    if (!templateName?.trim()) return res.status(400).json({ error: 'Template name required.' });
+
+    const where = { phone: { [Op.not]: null, [Op.ne]: '' } };
+    if (filter.gender) where.gender = filter.gender;
+    const patients = await Patient.findAll({ where });
+
+    const today = new Date();
+    const targets = patients.filter(p => {
+      if (filter.minAge || filter.maxAge) {
+        if (!p.dateOfBirth) return false;
+        const age = Math.floor((today - new Date(p.dateOfBirth)) / (365.25 * 24 * 3600 * 1000));
+        if (filter.minAge && age < Number(filter.minAge)) return false;
+        if (filter.maxAge && age > Number(filter.maxAge)) return false;
+      }
+      return true;
+    });
+
+    let sent = 0, failed = 0;
+    const errors = [];
+    for (const p of targets) {
+      try {
+        const name = `${p.firstName} ${p.lastName}`;
+        const params = includePatientName ? [name] : [];
+        await sendWhatsAppTemplate(cfg, p.phone, templateName.trim(), params);
+        sent++;
+      } catch (e) {
+        failed++;
+        const msg = e.response?.data?.error?.message || e.message;
+        if (errors.length < 20) errors.push({ patient: `${p.firstName} ${p.lastName}`, error: msg });
+      }
+    }
+    res.json({ sent, failed, total: targets.length, errors });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── Daily cron: follow-up + birthday reminders at 09:00 ──────────────────────
