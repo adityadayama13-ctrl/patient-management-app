@@ -8,13 +8,18 @@ echo   Clinic Patient Management App
 echo ============================================
 echo.
 
-:: Check setup was done
-if not exist "node_modules" (
-    echo [ERROR] App not set up yet.
-    echo Please run setup.bat first.
-    echo.
-    pause
-    exit /b 1
+:: Prefer bundled portable Node.js, fall back to system Node
+set "NODE_EXE=%~dp0runtime\node.exe"
+if not exist "%NODE_EXE%" (
+    where node >nul 2>&1
+    if errorlevel 1 (
+        echo [ERROR] Node.js not found.
+        echo Please re-extract the app zip or install Node.js from https://nodejs.org
+        echo.
+        pause
+        exit /b 1
+    )
+    set "NODE_EXE=node"
 )
 
 if not exist ".env" (
@@ -26,15 +31,15 @@ if not exist ".env" (
 )
 
 if not exist "client\build\index.html" (
-    echo [ERROR] React app not built yet.
-    echo Please run setup.bat first.
+    echo [ERROR] React app not built.
+    echo Please re-extract the full app zip.
     echo.
     pause
     exit /b 1
 )
 
 :: Start PostgreSQL service if not running (try common service names)
-for %%S in (postgresql-16 postgresql-15 postgresql-14 postgresql-13 postgresql) do (
+for %%S in (postgresql-17 postgresql-16 postgresql-15 postgresql-14 postgresql-13 postgresql-12 postgresql) do (
     sc query %%S >nul 2>&1
     if !errorlevel! equ 0 (
         sc query %%S | findstr "RUNNING" >nul 2>&1
@@ -56,7 +61,6 @@ for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
 :found
 set IP=%RAW: =%
 
-echo.
 :: Get hostname for mDNS URL
 for /f %%H in ('hostname') do set HOSTNAME=%%H
 
@@ -75,4 +79,4 @@ echo   Press Ctrl+C to stop the server.
 echo ============================================
 echo.
 
-node server.js
+"%NODE_EXE%" server.js
