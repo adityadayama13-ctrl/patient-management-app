@@ -13,8 +13,12 @@ const bcrypt = require('bcrypt');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
+// Allow CORS only in development (React dev server on :3000).
+// In production the React build is served by Express itself (same origin).
+app.use(cors({
+  origin: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : false,
+}));
+app.use(express.json({ limit: '2mb' }));
 
 // ── File upload (lab results) ─────────────────────────────────────────────────
 const UPLOADS_DIR = path.join(__dirname, 'uploads', 'labs');
