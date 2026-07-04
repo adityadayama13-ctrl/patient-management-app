@@ -44,7 +44,7 @@ for %%S in (postgresql-17 postgresql-16 postgresql-15 postgresql-14 postgresql-1
     if !errorlevel! equ 0 (
         sc query %%S | findstr "RUNNING" >nul 2>&1
         if !errorlevel! neq 0 (
-            echo Starting PostgreSQL service (%%S)...
+            echo Starting PostgreSQL service: %%S...
             net start %%S >nul 2>&1
             timeout /t 3 /nobreak >nul
         )
