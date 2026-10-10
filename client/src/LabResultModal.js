@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Icon from './icons';
 import './LabResultModal.css';
 
 const COMMON_TESTS = [
@@ -93,7 +94,7 @@ td{padding:5px 6px;border-bottom:1px solid #e0e0e0;vertical-align:middle}
   <div class="meta-item"><span class="meta-label">Patient</span><span class="meta-value">${patient.firstName} ${patient.lastName}</span></div>
   <div class="meta-item"><span class="meta-label">Age / Gender</span><span class="meta-value">${patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() + ' yrs' : '—'} / ${patient.gender || '—'}</span></div>
   ${patient.phone ? `<div class="meta-item"><span class="meta-label">Phone</span><span class="meta-value">${patient.phone}</span></div>` : ''}
-  <div class="meta-item"><span class="meta-label">Test Date</span><span class="meta-value">${lab.testDate}</span></div>
+  <div class="meta-item"><span class="meta-label">Test date</span><span class="meta-value">${lab.testDate}</span></div>
 </div>
 <div class="test-title">${lab.testName}</div>
 ${lab.labName ? `<div class="test-lab">Lab / Facility: ${lab.labName}</div>` : ''}
@@ -237,10 +238,10 @@ export default function LabResultModal({ patient, onClose }) {
       <div className="lab-modal">
         <div className="lab-modal-header">
           <div>
-            <div className="lab-modal-title">{editing ? 'Edit Lab Result' : 'New Lab Result'}</div>
+            <div className="lab-modal-title">{editing ? 'Edit lab result' : 'New lab result'}</div>
             <div className="lab-modal-sub">{patient.firstName} {patient.lastName}</div>
           </div>
-          <button className="lab-close" onClick={onClose}>✕</button>
+          <button className="lab-close" onClick={onClose} aria-label="Close"><Icon name="close" size={18} /></button>
         </div>
 
         <form onSubmit={handleSave} className="lab-form">
@@ -248,12 +249,12 @@ export default function LabResultModal({ patient, onClose }) {
 
           <div className="lab-form-row">
             <div className="lab-field">
-              <label>Test Date</label>
+              <label>Test date</label>
               <input type="date" value={form.testDate} required
                 onChange={e => setForm(f => ({ ...f, testDate: e.target.value }))} />
             </div>
             <div className="lab-field">
-              <label>Test / Panel Name</label>
+              <label>Test or panel name</label>
               <input list="common-tests" value={form.testName} placeholder="e.g. CBC, Lipid Profile"
                 onChange={e => setForm(f => ({ ...f, testName: e.target.value }))} required />
               <datalist id="common-tests">
@@ -270,8 +271,8 @@ export default function LabResultModal({ patient, onClose }) {
           {/* Parameters table */}
           <div className="lab-params-section">
             <div className="lab-params-header">
-              <span className="lab-section-label">Test Parameters</span>
-              <button type="button" className="lab-add-param" onClick={addParam}>+ Add Row</button>
+              <span className="lab-section-label">Test parameters</span>
+              <button type="button" className="lab-add-param" onClick={addParam}>Add row</button>
             </div>
             <div className="lab-params-wrap">
               <table className="lab-params-table">
@@ -280,8 +281,8 @@ export default function LabResultModal({ patient, onClose }) {
                     <th>Parameter</th>
                     <th>Value</th>
                     <th>Unit</th>
-                    <th>Ref Low</th>
-                    <th>Ref High</th>
+                    <th>Reference low</th>
+                    <th>Reference high</th>
                     <th>Status</th>
                     <th></th>
                   </tr>
@@ -304,18 +305,18 @@ export default function LabResultModal({ patient, onClose }) {
                           className={p.isAbnormal ? 'param-badge abnormal' : 'param-badge normal'}
                           onClick={() => toggleManualAbnormal(i)}
                           title="Click to toggle">
-                          {p.isAbnormal ? '⚠ Abnormal' : '✓ Normal'}
+                          {p.isAbnormal ? 'Abnormal' : 'Normal'}
                         </button>
                       </td>
                       <td>{form.parameters.length > 1 &&
-                        <button type="button" className="lab-remove-param" onClick={() => removeParam(i)}>✕</button>}
+                        <button type="button" className="lab-remove-param" onClick={() => removeParam(i)} aria-label="Remove row"><Icon name="close" size={16} /></button>}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="lab-auto-flag-hint">Status auto-flags when value is outside Ref Low–High. Click badge to override.</p>
+            <p className="lab-auto-flag-hint">Status is flagged automatically when a value falls outside the reference range. Select the badge to override it.</p>
           </div>
 
           <div className="lab-field">
@@ -326,16 +327,16 @@ export default function LabResultModal({ patient, onClose }) {
 
           {/* File attachment */}
           <div className="lab-field">
-            <label>Attach File (PDF / image, max 20 MB)</label>
+            <label>Attach a file (PDF or image, up to 20 MB)</label>
             <div className="lab-file-row">
               <input type="file" ref={fileRef} accept=".pdf,image/*"
                 style={{ display: 'none' }}
                 onChange={e => setAttachment(e.target.files[0] || null)} />
               <button type="button" className="lab-file-btn" onClick={() => fileRef.current.click()}>
-                📎 {attachment ? attachment.name : editing?.attachmentName ? 'Replace file' : 'Choose file'}
+                {attachment ? attachment.name : editing?.attachmentName ? 'Replace file' : 'Choose file'}
               </button>
               {attachment && (
-                <button type="button" className="lab-file-clear" onClick={() => { setAttachment(null); fileRef.current.value = ''; }}>✕</button>
+                <button type="button" className="lab-file-clear" onClick={() => { setAttachment(null); fileRef.current.value = ''; }} aria-label="Remove file"><Icon name="close" size={16} /></button>
               )}
               {!attachment && editing?.attachmentName && (
                 <span className="lab-existing-file">
@@ -360,12 +361,12 @@ export default function LabResultModal({ patient, onClose }) {
       <div className="lab-modal">
         <div className="lab-modal-header">
           <div>
-            <div className="lab-modal-title">Lab Results</div>
+            <div className="lab-modal-title">Lab results</div>
             <div className="lab-modal-sub">{patient.firstName} {patient.lastName}</div>
           </div>
           <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
-            <button className="lab-new-btn" onClick={startNew}>+ New Result</button>
-            <button className="lab-close" onClick={onClose}>✕</button>
+            <button className="lab-new-btn" onClick={startNew}>New result</button>
+            <button className="lab-close" onClick={onClose} aria-label="Close"><Icon name="close" size={18} /></button>
           </div>
         </div>
 
@@ -373,9 +374,9 @@ export default function LabResultModal({ patient, onClose }) {
           {loading && <p className="lab-empty">Loading…</p>}
           {!loading && labs.length === 0 && (
             <div className="lab-empty-state">
-              <div className="lab-empty-icon">🧪</div>
+              <div className="lab-empty-icon"><Icon name="flask" size={28} /></div>
               <p>No lab results yet for this patient.</p>
-              <button onClick={startNew}>Add First Lab Result</button>
+              <button onClick={startNew}>Add the first lab result</button>
             </div>
           )}
 
@@ -391,19 +392,19 @@ export default function LabResultModal({ patient, onClose }) {
                     {lab.labName && <span className="lab-card-lab">{lab.labName}</span>}
                     <div className="lab-card-badges">
                       {abn > 0
-                        ? <span className="lab-badge-abnormal">⚠ {abn} Abnormal</span>
+                        ? <span className="lab-badge-abnormal">{abn} abnormal</span>
                         : lab.parameters?.length > 0
-                          ? <span className="lab-badge-normal">✓ All Normal</span>
+                          ? <span className="lab-badge-normal">All normal</span>
                           : null}
-                      {lab.attachmentName && <span className="lab-badge-file">📎 {lab.attachmentName}</span>}
+                      {lab.attachmentName && <span className="lab-badge-file">{lab.attachmentName}</span>}
                     </div>
                   </div>
                   <div className="lab-card-actions">
-                    <button className="lab-btn-print" onClick={() => printLabSlip(lab, patient)}>🖨 Print</button>
+                    <button className="lab-btn-print" onClick={() => printLabSlip(lab, patient)}>Print</button>
                     <button className="lab-btn-edit" onClick={() => startEdit(lab)}>Edit</button>
                     <button className="lab-btn-delete" onClick={() => handleDelete(lab.id)}>Delete</button>
                     <button className="lab-btn-expand" onClick={() => setExpanded(isOpen ? null : lab.id)}>
-                      {isOpen ? '▲' : '▼'}
+                      <Icon name="chevron" size={18} className={isOpen ? 'chev open' : 'chev'} />
                     </button>
                   </div>
                 </div>
@@ -424,8 +425,8 @@ export default function LabResultModal({ patient, onClose }) {
                               <td>{p.low && p.high ? `${p.low} – ${p.high}` : p.low ? `≥ ${p.low}` : p.high ? `≤ ${p.high}` : '—'}</td>
                               <td>
                                 {p.isAbnormal
-                                  ? <span className="status-abnormal">⚠ Abnormal</span>
-                                  : <span className="status-normal">✓ Normal</span>}
+                                  ? <span className="status-abnormal">Abnormal</span>
+                                  : <span className="status-normal">Normal</span>}
                               </td>
                             </tr>
                           ))}
@@ -442,7 +443,7 @@ export default function LabResultModal({ patient, onClose }) {
                           </a>
                         ) : (
                           <a href={lab.attachmentPath} target="_blank" rel="noreferrer" className="lab-file-link">
-                            📄 {lab.attachmentName}
+                            {lab.attachmentName}
                           </a>
                         )}
                         <button className="lab-remove-file" onClick={() => removeAttachment(lab)}>Remove</button>

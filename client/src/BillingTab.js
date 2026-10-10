@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './BillingTab.css';
 import { printBill } from './printBill';
+import Icon from './icons';
 
 const EMPTY_BILL = {
   patientId: '', appointmentId: '', medicalRecordId: '',
@@ -14,8 +15,16 @@ const EMPTY_PAYMENT = {
   amount: '', method: 'Cash', reference: '', notes: '',
 };
 
+// Indian digit grouping, and no trailing ".00" on whole amounts
 function fmt(n) {
-  return Number(n || 0).toFixed(2);
+  const v = Number(n || 0);
+  return v.toLocaleString('en-IN', { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(value) {
+  if (!value) return '—';
+  const d = new Date(`${String(value).slice(0, 10)}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function billTotal(bill) {
@@ -117,7 +126,7 @@ function BillForm({ patients, services, initial, onSaved, onCancel }) {
           </select>
         </div>
         <div className="bill-field">
-          <label>Bill Date *</label>
+          <label>Bill date *</label>
           <input type="date" value={form.billDate} onChange={e => set('billDate', e.target.value)} />
         </div>
         <div className="bill-field">
@@ -143,7 +152,7 @@ function BillForm({ patients, services, initial, onSaved, onCancel }) {
             </select>
           </div>
           <div className="bill-field">
-            <label>Visit Record <span className="bill-optional">(optional)</span></label>
+            <label>Visit record <span className="bill-optional">(optional)</span></label>
             <select value={form.medicalRecordId} onChange={e => set('medicalRecordId', e.target.value)}>
               <option value="">None</option>
               {records.map(r => (
@@ -159,11 +168,11 @@ function BillForm({ patients, services, initial, onSaved, onCancel }) {
       {/* Line items */}
       <div className="bill-items-section">
         <div className="bill-items-header">
-          <span className="bill-section-title">Line Items</span>
+          <span className="bill-section-title">Line items</span>
           <div className="bill-items-actions">
             <div className="bill-catalog-wrap">
               <button type="button" className="btn-catalog" onClick={() => setCatalogOpen(o => !o)}>
-                + From Catalog
+                Add from catalog
               </button>
               {catalogOpen && (
                 <div className="bill-catalog-dropdown">
@@ -179,12 +188,12 @@ function BillForm({ patients, services, initial, onSaved, onCancel }) {
                 </div>
               )}
             </div>
-            <button type="button" className="btn-custom-item" onClick={addCustomItem}>+ Custom Item</button>
+            <button type="button" className="btn-custom-item" onClick={addCustomItem}>Add custom item</button>
           </div>
         </div>
 
         {form.items.length === 0
-          ? <p className="bill-empty-items">No items yet — add from catalog or create a custom item.</p>
+          ? <p className="bill-empty-items">No items yet. Add one from the catalog or create a custom item.</p>
           : (
           <table className="bill-items-table">
             <thead>
@@ -204,7 +213,7 @@ function BillForm({ patients, services, initial, onSaved, onCancel }) {
                       placeholder="0.00" className="bill-amount-input" />
                   </td>
                   <td>
-                    <button type="button" className="bill-remove-item" onClick={() => removeItem(idx)}>✕</button>
+                    <button type="button" className="bill-remove-item" onClick={() => removeItem(idx)} aria-label="Remove item"><Icon name="close" size={18} /></button>
                   </td>
                 </tr>
               ))}
@@ -213,7 +222,7 @@ function BillForm({ patients, services, initial, onSaved, onCancel }) {
         )}
 
         <div className="bill-total-row">
-          <span>{form.type === 'Estimate' ? 'Estimated Total' : 'Total'}</span>
+          <span>{form.type === 'Estimate' ? 'Estimated total' : 'Total'}</span>
           <span className="bill-total-amount">₹{fmt(total)}</span>
         </div>
       </div>
@@ -226,7 +235,7 @@ function BillForm({ patients, services, initial, onSaved, onCancel }) {
 
       <div className="bill-form-footer">
         <button type="button" className="secondary" onClick={onCancel}>Cancel</button>
-        <button type="submit" disabled={saving}>{saving ? 'Saving…' : (initial?.id ? 'Update' : `Create ${form.type}`)}</button>
+        <button type="submit" disabled={saving}>{saving ? 'Saving…' : (initial?.id ? 'Update' : `Create ${form.type.toLowerCase()}`)}</button>
       </div>
     </form>
   );
@@ -270,8 +279,8 @@ function PaymentPanel({ bill, onClose, onUpdated }) {
     <div className="reg-overlay">
       <div className="reg-modal pay-modal">
         <div className="reg-header">
-          <h2>Payments — Bill #{bill.id}</h2>
-          <button className="reg-close" onClick={onClose} type="button">✕</button>
+          <h2>Payments for bill #{bill.id}</h2>
+          <button className="reg-close" onClick={onClose} type="button" aria-label="Close"><Icon name="close" size={20} /></button>
         </div>
 
         <div className="pay-summary">
@@ -288,14 +297,14 @@ function PaymentPanel({ bill, onClose, onUpdated }) {
             : bill.payments.map(p => (
               <div key={p.id} className="pay-entry">
                 <div className="pay-entry-left">
-                  <span className="pay-entry-date">{p.paymentDate}</span>
+                  <span className="pay-entry-date">{fmtDate(p.paymentDate)}</span>
                   <span className={`pay-method pay-method-${(p.method || 'other').toLowerCase()}`}>{p.method || 'Other'}</span>
                   {p.reference && <span className="pay-ref">#{p.reference}</span>}
                   {p.notes && <span className="pay-notes">{p.notes}</span>}
                 </div>
                 <div className="pay-entry-right">
                   <span className="pay-entry-amount">₹{fmt(p.amount)}</span>
-                  <button type="button" className="pay-delete" onClick={() => handleDeletePayment(p.id)}>✕</button>
+                  <button type="button" className="pay-delete" onClick={() => handleDeletePayment(p.id)} aria-label="Remove payment"><Icon name="close" size={18} /></button>
                 </div>
               </div>
             ))
@@ -305,7 +314,7 @@ function PaymentPanel({ bill, onClose, onUpdated }) {
         {/* Add payment form */}
         {balance > 0 && (
           <form className="pay-add-form" onSubmit={handleAddPayment}>
-            <div className="pay-form-title">Log Payment</div>
+            <div className="pay-form-title">Record a payment</div>
             {error && <p className="reg-error">{error}</p>}
             <div className="bill-form-row">
               <div className="bill-field">
@@ -336,11 +345,11 @@ function PaymentPanel({ bill, onClose, onUpdated }) {
             </div>
             <div className="bill-form-footer">
               <div />
-              <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Record Payment'}</button>
+              <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Record payment'}</button>
             </div>
           </form>
         )}
-        {balance <= 0 && <p className="pay-paid-msg">✓ Fully paid</p>}
+        {balance <= 0 && <p className="pay-paid-msg">Fully paid</p>}
       </div>
     </div>
   );
@@ -395,11 +404,28 @@ export default function BillingTab({ patients }) {
     return true;
   });
 
+  const billActions = (b) => (
+    <>
+        {b.type === 'Estimate' && (
+          <button type="button" className="btn-convert" onClick={() => handleConvert(b)} title="Convert this estimate to an invoice">Make invoice</button>
+        )}
+        {b.type === 'Invoice' && b.status !== 'Paid' && (
+          <button type="button" className="btn-pay" onClick={() => setPayment(b)} title="Record a payment">Pay</button>
+        )}
+        {b.type === 'Invoice' && b.status === 'Paid' && (
+          <button type="button" className="btn-pay-view" onClick={() => setPayment(b)} title="View payments">View</button>
+        )}
+        <button type="button" className="btn-print" onClick={() => printBill(b, patientName(b))}>Print</button>
+        <button type="button" className="btn-edit" onClick={() => { setEditing(b); setView('edit'); }}>Edit</button>
+        <button type="button" className="btn-delete icon-only" onClick={() => handleDelete(b.id)} title="Delete bill" aria-label="Delete bill"><Icon name="trash" size={18} /></button>
+    </>
+  );
+
   if (view === 'new' || view === 'edit') {
     return (
       <div className="bill-form-card card">
         <div className="bill-form-header">
-          <h2>{view === 'new' ? 'New Bill' : `Edit Bill #${editingBill?.id}`}</h2>
+          <h2>{view === 'new' ? 'New bill' : `Edit bill #${editingBill?.id}`}</h2>
         </div>
         <BillForm
           patients={patients}
@@ -425,17 +451,22 @@ export default function BillingTab({ patients }) {
           ))}
         </div>
         <div className="bill-toolbar-right">
-          <input className="patient-search" placeholder="Search patient or bill #…"
-            value={search} onChange={e => setSearch(e.target.value)} />
-          <button onClick={() => { setEditing(null); setView('new'); }}>+ New Bill</button>
+          <label className="search-field">
+            <Icon name="search" size={18} />
+            <span className="sr-only">Search bills</span>
+            <input className="patient-search" placeholder="Search patient or bill number"
+              value={search} onChange={e => setSearch(e.target.value)} />
+          </label>
+          <button type="button" onClick={() => { setEditing(null); setView('new'); }}><Icon name="plus" /> New bill</button>
         </div>
       </div>
 
-      <div className="card">
-        <h2>Bills ({filtered.length})</h2>
+      <div className="card bill-card">
         {filtered.length === 0
-          ? <p className="empty">No bills found.</p>
+          ? <p className="empty bill-empty">No bills match this view.</p>
           : (
+          <>
+          <div className="bill-table-wrap">
           <table className="bill-table">
             <thead>
               <tr>
@@ -453,30 +484,43 @@ export default function BillingTab({ patients }) {
                   <tr key={b.id}>
                     <td className="bill-id">#{b.id}</td>
                     <td>{patientName(b)}</td>
-                    <td>{b.billDate}</td>
+                    <td>{fmtDate(b.billDate)}</td>
                     <td>₹{fmt(total)}</td>
                     <td className="pay-green">₹{fmt(paid)}</td>
                     <td className={balance > 0 ? 'pay-red' : 'pay-green'}>₹{fmt(balance)}</td>
                     <td><StatusBadge type={b.type} status={b.status} /></td>
-                    <td className="bill-actions">
-                      {b.type === 'Estimate' && (
-                        <button className="btn-convert" onClick={() => handleConvert(b)}>→ Invoice</button>
-                      )}
-                      {b.type === 'Invoice' && b.status !== 'Paid' && (
-                        <button className="btn-pay" onClick={() => setPayment(b)}>Pay</button>
-                      )}
-                      {b.type === 'Invoice' && b.status === 'Paid' && (
-                        <button className="btn-pay-view" onClick={() => setPayment(b)}>View</button>
-                      )}
-                      <button className="btn-print" onClick={() => printBill(b, patientName(b))}>Print</button>
-                      <button className="btn-edit" onClick={() => { setEditing(b); setView('edit'); }}>Edit</button>
-                      <button className="btn-delete" onClick={() => handleDelete(b.id)}>Delete</button>
-                    </td>
+                    <td><div className="bill-actions">{billActions(b)}</div></td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          </div>
+          <div className="bill-cards">
+            {filtered.map(b => {
+              const total   = billTotal(b);
+              const paid    = billPaid(b);
+              const balance = total - paid;
+              return (
+                <div key={b.id} className="bill-item">
+                  <div className="bill-item-top">
+                    <div>
+                      <div className="bill-item-name">{patientName(b)}</div>
+                      <div className="bill-item-sub">Bill #{b.id}, {fmtDate(b.billDate)}</div>
+                    </div>
+                    <StatusBadge type={b.type} status={b.status} />
+                  </div>
+                  <div className="bill-item-amounts">
+                    <div><span>Total</span><strong>₹{fmt(total)}</strong></div>
+                    <div><span>Paid</span><strong className="pay-green">₹{fmt(paid)}</strong></div>
+                    <div><span>Balance</span><strong className={balance > 0 ? 'pay-red' : 'pay-green'}>₹{fmt(balance)}</strong></div>
+                  </div>
+                  <div className="bill-actions bill-item-actions">{billActions(b)}</div>
+                </div>
+              );
+            })}
+          </div>
+          </>
         )}
       </div>
 

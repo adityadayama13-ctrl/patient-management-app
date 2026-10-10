@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import Icon from './icons';
 import './WhatsAppModal.css';
 
 const TYPES = [
-  { key: 'follow_up', label: 'Follow-up Reminder', templateKey: 'followUpTemplate',
+  { key: 'follow_up', label: 'Follow-up reminder', templateKey: 'followUpTemplate',
     desc: 'Remind patient of their upcoming or pending follow-up visit.' },
-  { key: 'birthday',  label: 'Birthday Wish',       templateKey: 'birthdayTemplate',
+  { key: 'birthday',  label: 'Birthday wish',       templateKey: 'birthdayTemplate',
     desc: 'Send a warm birthday greeting to the patient.' },
 ];
 
@@ -43,8 +44,8 @@ export default function WhatsAppModal({ patient, onClose }) {
     <div className="reg-overlay">
       <div className="reg-modal wa-modal">
         <div className="reg-header">
-          <h2>Send WhatsApp — {name}</h2>
-          <button className="reg-close" onClick={onClose} type="button">✕</button>
+          <h2>Send a WhatsApp message to {name}</h2>
+          <button className="reg-close" onClick={onClose} type="button" aria-label="Close"><Icon name="close" size={18} /></button>
         </div>
 
         <div className="wa-modal-body">
@@ -54,7 +55,7 @@ export default function WhatsAppModal({ patient, onClose }) {
             </div>
           )}
 
-          <div className="wa-modal-label">Message Type</div>
+          <div className="wa-modal-label">Message type</div>
           <div className="wa-type-list">
             {TYPES.map(t => (
               <button key={t.key} type="button"
@@ -68,7 +69,7 @@ export default function WhatsAppModal({ patient, onClose }) {
 
           <div className="wa-modal-label" style={{ marginTop: '1rem' }}>Sending to</div>
           <div className="wa-phone-display">
-            <span className="wa-phone-icon">📱</span>
+            <span className="wa-phone-icon"><Icon name="message" size={18} /></span>
             <span>{patient.phone || '—'}</span>
           </div>
 
@@ -80,7 +81,7 @@ export default function WhatsAppModal({ patient, onClose }) {
             <button type="button" className="secondary" onClick={onClose}>Cancel</button>
             <button type="button" onClick={handleSend}
               disabled={sending || !patient.phone}>
-              {sending ? 'Sending…' : '📤 Send WhatsApp'}
+              {sending ? 'Sending…' : 'Send WhatsApp message'}
             </button>
           </div>
         </div>

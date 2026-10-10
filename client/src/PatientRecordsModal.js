@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import Icon from './icons';
 import './PatientRegistration.css';
 import './PatientRecordsModal.css';
 
@@ -42,7 +43,7 @@ function CatalogPicker({ services, onSelect }) {
   return (
     <div className="rec-catalog-wrap" ref={ref}>
       <button type="button" className="rec-catalog-btn" onClick={() => setOpen(o => !o)}>
-        + From Catalog
+        Add from catalog
       </button>
       {open && (
         <div className="rec-catalog-dropdown">
@@ -157,27 +158,27 @@ function RecordForm({ initial, patientId, services, onSaved, onCancel }) {
     <form className="rec-form" onSubmit={handleSubmit}>
       {error && <p className="reg-error">{error}</p>}
 
-      <div className="rec-section-title">Visit Info</div>
+      <div className="rec-section-title">Visit info</div>
       <div className="reg-row">
         <div className="reg-field">
-          <label>Visit Date *</label>
+          <label>Visit date *</label>
           <input type="date" value={form.visitDate} onChange={e => set('visitDate', e.target.value)} />
         </div>
         <div className="reg-field">
-          <label>Attending Doctor</label>
+          <label>Attending doctor</label>
           <input value={form.doctorName} onChange={e => set('doctorName', e.target.value)} placeholder="Dr. Name" />
         </div>
       </div>
       <div className="reg-field">
-        <label>Chief Complaint</label>
+        <label>Chief complaint</label>
         <input value={form.chiefComplaint} onChange={e => set('chiefComplaint', e.target.value)}
           placeholder="Reason for visit (in patient's words)" />
       </div>
 
-      <div className="rec-section-title">Vital Signs</div>
+      <div className="rec-section-title">Vital signs</div>
       <div className="reg-row">
         <div className="reg-field">
-          <label>Blood Pressure</label>
+          <label>Blood pressure</label>
           <input value={form.vitalsBP} onChange={e => set('vitalsBP', e.target.value)} placeholder="e.g. 120/80 mmHg" />
         </div>
         <div className="reg-field">
@@ -190,7 +191,7 @@ function RecordForm({ initial, patientId, services, onSaved, onCancel }) {
         </div>
       </div>
 
-      <div className="rec-section-title">Diagnosis & Treatment</div>
+      <div className="rec-section-title">Diagnosis and treatment</div>
       <div className="reg-field">
         <label>Diagnosis</label>
         <textarea value={form.diagnosis} onChange={e => set('diagnosis', e.target.value)}
@@ -202,21 +203,21 @@ function RecordForm({ initial, patientId, services, onSaved, onCancel }) {
           placeholder="Medications prescribed, dosage, duration" rows={2} />
       </div>
       <div className="reg-row">
-        <TreatmentField label="Treatment Planned" fieldKey="treatmentPlanned"
+        <TreatmentField label="Treatment planned" fieldKey="treatmentPlanned"
           value={form.treatmentPlanned} onChange={v => set('treatmentPlanned', v)} services={services} />
-        <TreatmentField label="Treatment Done" fieldKey="treatmentDone"
+        <TreatmentField label="Treatment done" fieldKey="treatmentDone"
           value={form.treatmentDone} onChange={v => set('treatmentDone', v)} services={services} />
       </div>
 
       <div className="rec-section-title">Follow-up & Notes</div>
       <div className="reg-row">
         <div className="reg-field">
-          <label>Follow-up Date</label>
+          <label>Follow-up date</label>
           <input type="date" value={form.followUpDate} onChange={e => set('followUpDate', e.target.value)} />
         </div>
       </div>
       <div className="reg-field">
-        <label>Clinical Notes</label>
+        <label>Clinical notes</label>
         <textarea value={form.clinicalNotes} onChange={e => set('clinicalNotes', e.target.value)}
           placeholder="Additional observations, test results, referrals…" rows={3} />
       </div>
@@ -224,7 +225,7 @@ function RecordForm({ initial, patientId, services, onSaved, onCancel }) {
       <div className="reg-actions" style={{ marginTop: '0.5rem' }}>
         <button type="button" className="secondary" onClick={onCancel}>Cancel</button>
         <div />
-        <button type="submit" disabled={saving}>{saving ? 'Saving…' : (initial?.id ? 'Update Record' : 'Save Record')}</button>
+        <button type="submit" disabled={saving}>{saving ? 'Saving…' : (initial?.id ? 'Update record' : 'Save record')}</button>
       </div>
     </form>
   );
@@ -249,7 +250,7 @@ function RecordCard({ record, onEdit, onDelete }) {
             onClick={e => { e.stopPropagation(); onEdit(record); }}>Edit</button>
           <button type="button" className="btn-delete rec-btn"
             onClick={e => { e.stopPropagation(); onDelete(record.id); }}>Delete</button>
-          <span className="rec-chevron">{expanded ? '▲' : '▼'}</span>
+          <span className="rec-chevron"><Icon name="chevron" size={18} className={expanded ? 'chev open' : 'chev'} /></span>
         </div>
       </div>
 
@@ -271,13 +272,13 @@ function RecordCard({ record, onEdit, onDelete }) {
             <div className="rec-treatment-grid">
               {record.treatmentPlanned && (
                 <div className="rec-treatment-box">
-                  <div className="rec-treatment-title">Treatment Planned</div>
+                  <div className="rec-treatment-title">Treatment planned</div>
                   <div>{record.treatmentPlanned}</div>
                 </div>
               )}
               {record.treatmentDone && (
                 <div className="rec-treatment-box rec-treatment-done">
-                  <div className="rec-treatment-title">Treatment Done</div>
+                  <div className="rec-treatment-title">Treatment done</div>
                   <div>{record.treatmentDone}</div>
                 </div>
               )}
@@ -352,15 +353,15 @@ export default function PatientRecordsModal({ patient, onClose }) {
     <div className="reg-overlay">
       <div className="reg-modal rec-modal">
         <div className="reg-header">
-          <h2>Medical Records — {patient.firstName} {patient.lastName}</h2>
-          <button className="reg-close" onClick={onClose} type="button">✕</button>
+          <h2>Medical records for {patient.firstName} {patient.lastName}</h2>
+          <button className="reg-close" onClick={onClose} type="button" aria-label="Close"><Icon name="close" size={18} /></button>
         </div>
 
         {view === 'list' && (
           <div className="rec-list-view">
             <div className="rec-list-toolbar">
               <span className="rec-count">{records.length} record{records.length !== 1 ? 's' : ''}</span>
-              <button type="button" onClick={() => setView('add')}>+ Add Record</button>
+              <button type="button" onClick={() => setView('add')}>Add record</button>
             </div>
             {loading
               ? <p className="empty rec-pad">Loading…</p>

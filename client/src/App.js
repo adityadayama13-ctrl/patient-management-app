@@ -10,6 +10,9 @@ import PrescriptionModal from './PrescriptionModal';
 import LabResultModal from './LabResultModal';
 import LoginScreen from './LoginScreen';
 import ManageTab from './ManageTab';
+import TodayTab from './TodayTab';
+import ToothRow from './ToothRow';
+import Icon from './icons';
 
 // ── Role permissions (dynamic, loaded from localStorage) ──────────────────────
 export const PERMISSION_FEATURES = [
@@ -62,9 +65,9 @@ const DEFAULT_CLINIC = {
 };
 
 const PERIOD_DEFS = [
-  { key: 'morning',   label: '🌅 Morning'   },
-  { key: 'afternoon', label: '☀️ Afternoon' },
-  { key: 'evening',   label: '🌆 Evening'   },
+  { key: 'morning',   label: 'Morning'   },
+  { key: 'afternoon', label: 'Afternoon' },
+  { key: 'evening',   label: 'Evening'   },
 ];
 
 function loadClinicConfig() {
@@ -169,13 +172,51 @@ export function licenseStatus(lic) {
 const EMPTY_PATIENT = { firstName: '', lastName: '', dateOfBirth: '', gender: '', phone: '', email: '', address: '' };
 const EMPTY_APPT    = { patientId: '', apptDate: '', apptSlot: '', reason: '', notes: '', status: 'Scheduled' };
 
+// `short` is the label used on the phone tab bar, where space is tight.
 const TAB_META = [
-  { key: 'patients',     label: 'Patients',     icon: '👤' },
-  { key: 'appointments', label: 'Appointments', icon: '📅' },
-  { key: 'billing',      label: 'Billing',      icon: '💳' },
-  { key: 'manage',       label: 'Manage',        icon: '🛡️', adminOnly: true },
-  { key: 'settings',     label: 'Settings',     icon: '⚙️', adminOnly: true },
+  { key: 'today',        label: 'Today',        icon: 'today' },
+  { key: 'patients',     label: 'Patients',     icon: 'patients' },
+  { key: 'appointments', label: 'Appointments', short: 'Visits', icon: 'appointments' },
+  { key: 'billing',      label: 'Billing',      icon: 'billing' },
+  { key: 'manage',       label: 'Manage',       icon: 'manage',   adminOnly: true },
+  { key: 'settings',     label: 'Settings',     icon: 'settings', adminOnly: true },
 ];
+
+function formatApptDate(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  const day = d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const h = d.getHours();
+  const time = `${h % 12 || 12}:${String(d.getMinutes()).padStart(2, "0")} ${h >= 12 ? "pm" : "am"}`;
+  return `${day}, ${time}`;
+}
+
+function formatDob(value) {
+  if (!value) return "—";
+  const d = new Date(`${String(value).slice(0, 10)}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function ageFrom(dateOfBirth) {
+  if (!dateOfBirth) return null;
+  const dob = new Date(dateOfBirth);
+  if (Number.isNaN(dob.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const beforeBirthday = now.getMonth() < dob.getMonth() || (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate());
+  if (beforeBirthday) age -= 1;
+  return age >= 0 ? age : null;
+}
+
+function initialsOf(first, last) {
+  return `${Array.from(first || '')[0] || ''}${Array.from(last || '')[0] || ''}`.toUpperCase() || '?';
+}
+
+// "34 years, Female" under a patient's name; skips whatever is missing
+function patientSub(p) {
+  const age = ageFrom(p.dateOfBirth);
+  return [age !== null ? `${age} ${age === 1 ? 'year' : 'years'}` : null, p.gender].filter(Boolean).join(', ') || 'No details added';
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -193,7 +234,7 @@ export default function App() {
 }
 
 function AppShell({ currentUser, role, onLogout }) {
-  const [tab, setTab] = useState('patients');
+  const [tab, setTab] = useState('today');
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [patientForm, setPatientForm] = useState(EMPTY_PATIENT);
@@ -218,7 +259,7 @@ function AppShell({ currentUser, role, onLogout }) {
   const [rolePerms, setRolePerms] = useState(loadRolePerms);
   const [license, setLicense] = useState({});
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Load license from DB on mount
   useEffect(() => { fetchLicenseFromDB().then(setLicense); }, []);
@@ -229,13 +270,13 @@ function AppShell({ currentUser, role, onLogout }) {
     const newLic   = await fetchLicenseFromDB();
     setRolePerms(newPerms);
     setLicense(newLic);
-    // If the active tab is now hidden, fall back to patients
+    // If the active tab is now hidden, fall back to Today
     const stillVisible = TAB_META
       .filter(t => !t.adminOnly || role === 'Admin')
       .filter(t => t.key !== 'billing'      || can(newPerms, role, 'billing'))
       .filter(t => t.key !== 'appointments' || can(newPerms, role, 'appointments'))
       .map(t => t.key);
-    setTab(prev => stillVisible.includes(prev) ? prev : 'patients');
+    setTab(prev => stillVisible.includes(prev) ? prev : 'today');
   }
 
   // Premium feature is available only if license is valid AND the feature is licensed
@@ -286,7 +327,7 @@ function AppShell({ currentUser, role, onLogout }) {
       }
       setPatientForm(EMPTY_PATIENT); setEditingPatientId(null); fetchPatients();
     } catch {
-      setPatientError('Cannot reach server — check your connection and try again.');
+      setPatientError('Cannot reach the server. Check your connection and try again.');
     }
   }
   function handlePatientEdit(p) { setEditingPatient(p); }
@@ -297,7 +338,7 @@ function AppShell({ currentUser, role, onLogout }) {
       if (!res.ok) { alert('Failed to delete patient. They may have linked records or bills.'); return; }
       fetchPatients();
     } catch {
-      alert('Cannot reach server — check your connection and try again.');
+      alert('Cannot reach the server. Check your connection and try again.');
     }
   }
 
@@ -319,7 +360,7 @@ function AppShell({ currentUser, role, onLogout }) {
       }
       setApptForm(EMPTY_APPT); setEditingApptId(null); fetchAppointments();
     } catch {
-      setApptError('Cannot reach server — check your connection and try again.');
+      setApptError('Cannot reach the server. Check your connection and try again.');
     }
   }
   function handleApptEdit(a) {
@@ -347,7 +388,7 @@ function AppShell({ currentUser, role, onLogout }) {
       if (!res.ok) { alert('Failed to delete appointment.'); return; }
       fetchAppointments();
     } catch {
-      alert('Cannot reach server — check your connection and try again.');
+      alert('Cannot reach the server. Check your connection and try again.');
     }
   }
 
@@ -396,19 +437,35 @@ function AppShell({ currentUser, role, onLogout }) {
     .filter(t => t.key !== 'appointments' || can(rolePerms, role, 'appointments'));
   const activeTabLabel = visibleTabs.find(t => t.key === tab)?.label ?? '';
 
-  const ROLE_COLORS = { Admin: '#8b5cf6', Doctor: '#3b82f6', Receptionist: '#f59e0b', Nurse: '#10b981' };
+  // Phone tab bar: everyone's tabs sit in the bar, admin-only tabs live under "More"
+  const barTabs = visibleTabs.filter(t => !t.adminOnly);
+  const moreTabs = visibleTabs.filter(t => t.adminOnly);
+  const moreActive = moreTabs.some(t => t.key === tab);
+  const canEditPatients = can(rolePerms, role, 'editPatients');
+  const userInitial = (Array.from(currentUser.name || '')[0] || '?').toUpperCase();
+
+  function goTo(key) {
+    setTab(key);
+    setMoreOpen(false);
+    window.scrollTo(0, 0);
+  }
+
+  const pageLede = tab === 'patients'
+    ? (patients.length === 1 ? '1 patient registered.' : `${patients.length} patients registered.`)
+    : tab === 'appointments'
+      ? (appointments.length === 1 ? '1 appointment in total.' : `${appointments.length} appointments in total.`)
+      : '';
 
   return (
     <div className="app" data-theme={darkMode ? 'dark' : 'light'}>
 
-      {/* ── Sidebar ── */}
-      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
-      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
+      {/* ── Rail (desktop) ── */}
+      <aside className="sidebar" aria-label="Main navigation">
         <div className="sidebar-brand">
           <div className="sidebar-brand-row">
             {profile.logo && profile.logoType === 'logo'
               ? <img src={profile.logo} alt="Clinic logo" className="sidebar-logo" />
-              : <div className="sidebar-logo-placeholder">🏥</div>
+              : <div className="sidebar-logo-placeholder"><Icon name="tooth" size={22} /></div>
             }
             <div className="sidebar-brand-text">
               <span className="sidebar-clinic-name">{profile.name || 'My Clinic'}</span>
@@ -422,9 +479,10 @@ function AppShell({ currentUser, role, onLogout }) {
             <button
               key={key}
               className={tab === key ? 'nav-item active' : 'nav-item'}
-              onClick={() => { setTab(key); setSidebarOpen(false); }}
+              onClick={() => goTo(key)}
+              aria-current={tab === key ? 'page' : undefined}
             >
-              <span className="nav-item-icon">{icon}</span>
+              <Icon name={icon} />
               {label}
             </button>
           ))}
@@ -432,53 +490,90 @@ function AppShell({ currentUser, role, onLogout }) {
 
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <div className="sidebar-user-name">{currentUser.name}</div>
-            <div className="sidebar-user-role" style={{ color: ROLE_COLORS[role] }}>{role}</div>
+            <div className="avatar">{userInitial}</div>
+            <div className="sidebar-user-text">
+              <div className="sidebar-user-name">{currentUser.name}</div>
+              <div className="sidebar-user-role">{role}</div>
+            </div>
           </div>
-          <button className="dark-toggle" onClick={() => setDarkMode(d => !d)}>
-            <span className="dark-toggle-icon">{darkMode ? '☀️' : '🌙'}</span>
-            {darkMode ? 'Light mode' : 'Dark mode'}
-          </button>
-          <button className="sidebar-logout" onClick={onLogout}>Sign out</button>
+          <div className="rail-actions">
+            <button type="button" className="rail-btn" onClick={() => setDarkMode(d => !d)}>
+              <Icon name={darkMode ? 'sun' : 'moon'} size={18} />
+              {darkMode ? 'Light mode' : 'Dark mode'}
+            </button>
+            <button type="button" className="rail-btn" onClick={onLogout}>
+              <Icon name="logout" size={18} />
+              Sign out
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* ── Main content ── */}
       <div className="main-content">
 
-        <header className="main-header">
-          <button className="hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Toggle menu">☰</button>
-          <span className="main-header-title">{activeTabLabel}</span>
-          <div className="main-header-actions">
-            {tab === 'patients' && can(rolePerms, role, 'editPatients') && (
-              <>
-                <button className="btn-quick-add" onClick={() => setShowQuickAdd(v => !v)}>
-                  {showQuickAdd ? '▲ Hide Quick Add' : '▼ Quick Add'}
-                </button>
-                <button className="btn-register" onClick={() => setShowReg(true)}>+ Register Patient</button>
-              </>
-            )}
-            <div className="header-user-pill">
-              <span className="header-user-name">{currentUser.name}</span>
-              <button className="header-logout-btn" onClick={onLogout} title="Sign out">Sign out</button>
-            </div>
-          </div>
-        </header>
-
       <div className="main-body">
+
+      {tab === 'today' && (
+        <TodayTab
+          userName={currentUser.name}
+          patients={patients}
+          appointments={appointments}
+          canAppointments={can(rolePerms, role, 'appointments')}
+          canBilling={can(rolePerms, role, 'billing')}
+          canEditPatients={canEditPatients}
+          currency={profile.currency || '₹'}
+          onRegister={() => setShowReg(true)}
+          onOpenTab={goTo}
+        />
+      )}
+
+      {tab !== 'today' && (
+        <div className="page-head">
+          <div>
+            <h1>{activeTabLabel}</h1>
+            {pageLede && <p className="lede">{pageLede}</p>}
+          </div>
+          {tab === 'patients' && (
+            <div className="page-actions">
+              <label className="search-field">
+                <Icon name="search" size={18} />
+                <span className="sr-only">Search patients</span>
+                <input
+                  className="patient-search"
+                  placeholder="Search by name, phone or email"
+                  value={patientSearch}
+                  onChange={e => setPatientSearch(e.target.value)}
+                />
+              </label>
+              {canEditPatients && (
+                <>
+                  <button type="button" className="btn-quick-add" onClick={() => setShowQuickAdd(v => !v)}>
+                    {showQuickAdd ? 'Hide quick add' : 'Quick add'}
+                  </button>
+                  <button type="button" className="btn-register" onClick={() => setShowReg(true)}>
+                    <Icon name="plus" /> Register patient
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
 
       {/* ── Patients ── */}
       {tab === 'patients' && (
         <>
           {showQuickAdd && can(rolePerms, role, 'editPatients') && (
           <section className="card quick-add-card">
-            <h2>{editingPatientId ? 'Edit Patient' : 'Quick Add Patient'}</h2>
+            <h2>{editingPatientId ? 'Edit patient' : 'Quick add patient'}</h2>
             {patientError && <p className="error">{patientError}</p>}
             <form onSubmit={handlePatientSubmit} className="form">
               <div className="form-row">
-                <input placeholder="First Name" value={patientForm.firstName}
+                <input placeholder="First name" value={patientForm.firstName}
                   onChange={e => setPatientForm({ ...patientForm, firstName: e.target.value })} required />
-                <input placeholder="Last Name" value={patientForm.lastName}
+                <input placeholder="Last name" value={patientForm.lastName}
                   onChange={e => setPatientForm({ ...patientForm, lastName: e.target.value })} required />
               </div>
               <div className="form-row">
@@ -499,7 +594,7 @@ function AppShell({ currentUser, role, onLogout }) {
               <textarea placeholder="Address" value={patientForm.address} rows={2}
                 onChange={e => setPatientForm({ ...patientForm, address: e.target.value })} />
               <div className="form-actions">
-                <button type="submit">{editingPatientId ? 'Update' : 'Add Patient'}</button>
+                <button type="submit">{editingPatientId ? 'Update' : 'Add patient'}</button>
                 {editingPatientId && (
                   <button type="button" className="secondary"
                     onClick={() => { setPatientForm(EMPTY_PATIENT); setEditingPatientId(null); setPatientError(''); }}>Cancel</button>
@@ -508,17 +603,17 @@ function AppShell({ currentUser, role, onLogout }) {
             </form>
           </section>
           )}
-          <section className="card">
-            <div className="patients-list-header">
-              <h2>Patients ({patients.length})</h2>
-              <input
-                className="patient-search"
-                placeholder="Search by name, phone or email…"
-                value={patientSearch}
-                onChange={e => setPatientSearch(e.target.value)}
-              />
-            </div>
-            {patients.length === 0 ? <p className="empty">No patients yet.</p> : (() => {
+          <section className="card list-card">
+            {patients.length === 0 ? (
+              <div className="empty-state">
+                <ToothRow width={260} />
+                <h2>No patients yet</h2>
+                <p>Register your first patient to start their record, book visits and create bills.</p>
+                {canEditPatients && (
+                  <button type="button" onClick={() => setShowReg(true)}><Icon name="plus" /> Register patient</button>
+                )}
+              </div>
+            ) : (() => {
               const filtered = patients.filter(p => {
                 const q = patientSearch.toLowerCase();
                 return !q ||
@@ -528,25 +623,34 @@ function AppShell({ currentUser, role, onLogout }) {
               });
               if (filtered.length === 0) return <p className="empty">No patients match "{patientSearch}".</p>;
               const patientActions = (p) => <>
-                {can(rolePerms, role, 'medicalRecords') && <button onClick={() => setRecordsPatient(p)} className="btn-records">Records</button>}
-                {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientEdit(p)} className="btn-edit">Edit</button>}
-                {can(rolePerms, role, 'editPatients')   && <button onClick={() => handlePatientDelete(p.id)} className="btn-delete">Delete</button>}
-                {can(rolePerms, role, 'whatsapp')       && <button onClick={() => setWhatsappPatient(p)} className="btn-whatsapp" title="Send WhatsApp">💬</button>}
-                {premiumAvailable('prescriptions') && can(rolePerms, role, 'prescriptions') && <button onClick={() => setRxPatient(p)} className="btn-rx" title="Prescriptions">℞</button>}
-                {premiumAvailable('labResults')    && can(rolePerms, role, 'labResults')    && <button onClick={() => setLabPatient(p)} className="btn-lab" title="Lab Results">🧪</button>}
+                {can(rolePerms, role, 'medicalRecords') && <button type="button" onClick={() => setRecordsPatient(p)} className="btn-records">Records</button>}
+                {canEditPatients && <button type="button" onClick={() => handlePatientEdit(p)} className="btn-edit">Edit</button>}
+                {can(rolePerms, role, 'whatsapp') && <button type="button" onClick={() => setWhatsappPatient(p)} className="btn-whatsapp" title="Send WhatsApp message" aria-label="Send WhatsApp message"><Icon name="message" size={18} /></button>}
+                {premiumAvailable('prescriptions') && can(rolePerms, role, 'prescriptions') && <button type="button" onClick={() => setRxPatient(p)} className="btn-rx" title="Prescriptions" aria-label="Prescriptions">Rx</button>}
+                {premiumAvailable('labResults')    && can(rolePerms, role, 'labResults')    && <button type="button" onClick={() => setLabPatient(p)} className="btn-lab" title="Lab results" aria-label="Lab results"><Icon name="flask" size={18} /></button>}
+                {canEditPatients && <button type="button" onClick={() => handlePatientDelete(p.id)} className="btn-delete icon-only" title="Delete patient" aria-label="Delete patient"><Icon name="trash" size={18} /></button>}
               </>;
               return (
                 <>
                   {/* Desktop: table */}
                   <div className="patients-table-wrap">
                     <table>
-                      <thead><tr><th>Name</th><th>DOB</th><th>Gender</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead>
+                      <thead><tr><th>Name</th><th>Date of birth</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead>
                       <tbody>
                         {filtered.map(p => (
                           <tr key={p.id}>
-                            <td>{p.firstName} {p.lastName}</td><td>{p.dateOfBirth}</td><td>{p.gender}</td>
+                            <td>
+                              <div className="pt-cell">
+                                <span className={`tile tone-${(p.id % 4) + 1}`}>{initialsOf(p.firstName, p.lastName)}</span>
+                                <div>
+                                  <div className="pt-cell-name">{p.firstName} {p.lastName}</div>
+                                  <div className="pt-cell-sub">{patientSub(p)}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td>{formatDob(p.dateOfBirth)}</td>
                             <td>{p.phone || '—'}</td><td>{p.email || '—'}</td>
-                            <td>{patientActions(p)}</td>
+                            <td><div className="row-actions">{patientActions(p)}</div></td>
                           </tr>
                         ))}
                       </tbody>
@@ -556,12 +660,17 @@ function AppShell({ currentUser, role, onLogout }) {
                   <div className="patients-card-grid">
                     {filtered.map(p => (
                       <div key={p.id} className="pt-card">
-                        <div className="pt-card-name">{p.firstName} {p.lastName}</div>
+                        <div className="pt-card-head">
+                          <span className={`tile tone-${(p.id % 4) + 1}`}>{initialsOf(p.firstName, p.lastName)}</span>
+                          <div>
+                            <div className="pt-card-name">{p.firstName} {p.lastName}</div>
+                            <div className="pt-cell-sub">{patientSub(p)}</div>
+                          </div>
+                        </div>
                         <div className="pt-card-meta">
-                          {p.dateOfBirth && <span className="pt-meta-item"><span className="pt-meta-label">DOB</span>{p.dateOfBirth}</span>}
-                          {p.gender      && <span className="pt-meta-item"><span className="pt-meta-label">Gender</span>{p.gender}</span>}
-                          {p.phone       && <span className="pt-meta-item"><span className="pt-meta-label">📞</span>{p.phone}</span>}
-                          {p.email       && <span className="pt-meta-item"><span className="pt-meta-label">✉</span>{p.email}</span>}
+                          {p.dateOfBirth && <span className="pt-meta-item"><span className="pt-meta-label">Born</span>{formatDob(p.dateOfBirth)}</span>}
+                          {p.phone       && <span className="pt-meta-item"><span className="pt-meta-label">Phone</span>{p.phone}</span>}
+                          {p.email       && <span className="pt-meta-item"><span className="pt-meta-label">Email</span>{p.email}</span>}
                         </div>
                         <div className="pt-card-actions">{patientActions(p)}</div>
                       </div>
@@ -578,7 +687,7 @@ function AppShell({ currentUser, role, onLogout }) {
       {tab === 'appointments' && (
         <>
           <section className="card">
-            <h2>{editingApptId ? 'Edit Appointment' : 'Add Appointment'}</h2>
+            <h2>{editingApptId ? 'Edit appointment' : 'Add appointment'}</h2>
             {apptError && <p className="error">{apptError}</p>}
             {patients.length === 0
               ? <p className="empty">Add a patient first before scheduling appointments.</p>
@@ -587,7 +696,7 @@ function AppShell({ currentUser, role, onLogout }) {
                 <div className="form-row">
                   <select value={apptForm.patientId}
                     onChange={e => setApptForm({ ...apptForm, patientId: e.target.value })} required>
-                    <option value="">Select Patient</option>
+                    <option value="">Select patient</option>
                     {patients.map(p => <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>)}
                   </select>
                   <select value={apptForm.status}
@@ -639,7 +748,7 @@ function AppShell({ currentUser, role, onLogout }) {
                   onChange={e => setApptForm({ ...apptForm, notes: e.target.value })} />
                 <div className="form-actions">
                   <button type="submit" disabled={apptForm.apptDate && !isWorkDay(apptForm.apptDate)}>
-                    {editingApptId ? 'Update' : 'Add Appointment'}
+                    {editingApptId ? 'Update' : 'Add appointment'}
                   </button>
                   {editingApptId && (
                     <button type="button" className="secondary"
@@ -649,24 +758,25 @@ function AppShell({ currentUser, role, onLogout }) {
               </form>
             )}
           </section>
-          <section className="card">
-            <h2>Appointments ({appointments.length})</h2>
+          <section className="card list-card">
             {appointments.length === 0 ? <p className="empty">No appointments yet.</p> : (
               <>
                 {/* Desktop: table */}
                 <div className="appts-table-wrap">
                   <table>
-                    <thead><tr><th>Patient</th><th>Date</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Patient</th><th>Date and time</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
                       {appointments.map(a => (
                         <tr key={a.id}>
                           <td>{patientName(a.patientId)}</td>
-                          <td>{new Date(a.date).toLocaleString()}</td>
+                          <td>{formatApptDate(a.date)}</td>
                           <td>{a.reason || '—'}</td>
                           <td><span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span></td>
                           <td>
-                            <button onClick={() => handleApptEdit(a)} className="btn-edit">Edit</button>
-                            <button onClick={() => handleApptDelete(a.id)} className="btn-delete">Delete</button>
+                            <div className="row-actions">
+                            <button type="button" onClick={() => handleApptEdit(a)} className="btn-edit">Edit</button>
+                              <button type="button" onClick={() => handleApptDelete(a.id)} className="btn-delete icon-only" title="Delete appointment" aria-label="Delete appointment"><Icon name="trash" size={18} /></button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -681,11 +791,11 @@ function AppShell({ currentUser, role, onLogout }) {
                         <span className="appt-card-patient">{patientName(a.patientId)}</span>
                         <span className={`badge badge-${a.status.toLowerCase()}`}>{a.status}</span>
                       </div>
-                      <div className="appt-card-date">📅 {new Date(a.date).toLocaleString()}</div>
+                      <div className="appt-card-date">{formatApptDate(a.date)}</div>
                       {a.reason && <div className="appt-card-reason">{a.reason}</div>}
                       <div className="appt-card-actions">
-                        <button onClick={() => handleApptEdit(a)} className="btn-edit">Edit</button>
-                        <button onClick={() => handleApptDelete(a.id)} className="btn-delete">Delete</button>
+                        <button type="button" onClick={() => handleApptEdit(a)} className="btn-edit">Edit</button>
+                        <button type="button" onClick={() => handleApptDelete(a.id)} className="btn-delete icon-only" title="Delete appointment" aria-label="Delete appointment"><Icon name="trash" size={18} /></button>
                       </div>
                     </div>
                   ))}
@@ -747,13 +857,13 @@ function AppShell({ currentUser, role, onLogout }) {
 
         <>
         <section className="card">
-          <h2>Clinic Profile</h2>
+          <h2>Clinic profile</h2>
           <form onSubmit={saveProfile} className="form">
 
             {/* Logo / Banner */}
-            <div className="setting-divider">Logo / Banner</div>
+            <div className="setting-divider">Logo or banner</div>
             <div className="setting-row">
-              <label className="setting-label">Display Type</label>
+              <label className="setting-label">Display type</label>
               <div className="mode-toggle">
                 <button type="button"
                   className={profile.logoType === 'logo' ? 'mode-btn active' : 'mode-btn'}
@@ -770,20 +880,11 @@ function AppShell({ currentUser, role, onLogout }) {
             <div className="setting-row" style={{ alignItems: 'flex-start', gap: '1.25rem' }}>
               {profile.logo ? (
                 profile.logoType === 'logo'
-                  ? <img src={profile.logo} alt="Clinic logo"
-                      style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 8,
-                        border: '1px solid #e2e8f0', background: '#f7fafc' }} />
-                  : <img src={profile.logo} alt="Clinic banner"
-                      style={{ width: 320, height: 72, objectFit: 'cover', borderRadius: 8,
-                        border: '1px solid #e2e8f0', background: '#f7fafc' }} />
+                  ? <img src={profile.logo} alt="Clinic logo" className="setting-preview" style={{ width: 80, height: 80 }} />
+                  : <img src={profile.logo} alt="Clinic banner" className="setting-preview" style={{ width: 320, height: 72, objectFit: 'cover' }} />
               ) : (
-                <div style={{
-                  width: profile.logoType === 'banner' ? 320 : 80,
-                  height: 72, borderRadius: 8, border: '2px dashed #cbd5e0', background: '#f7fafc',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#a0aec0', fontSize: '0.75rem', textAlign: 'center', padding: '0.5rem',
-                }}>
-                  No {profile.logoType}
+                <div className="setting-preview-empty" style={{ width: profile.logoType === 'banner' ? 320 : 80 }}>
+                  No {profile.logoType} yet
                 </div>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -800,21 +901,21 @@ function AppShell({ currentUser, role, onLogout }) {
                 </label>
                 {profile.logo && (
                   <button type="button" className="secondary"
-                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}
+                    style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}
                     onClick={() => setProfile(p => ({ ...p, logo: '' }))}>Remove</button>
                 )}
-                <span style={{ fontSize: '0.75rem', color: '#a0aec0', lineHeight: 1.5 }}>
+                <span className="setting-hint">
                   {profile.logoType === 'logo'
-                    ? <>Recommended: <b>200 × 200 px</b> (square)<br />PNG/JPG · shown beside clinic name on bills &amp; app header</>
-                    : <>Recommended: <b>1200 × 200 px</b> (wide)<br />PNG/JPG · shown full-width above bill content &amp; app header</>}
+                    ? <>Recommended: <b>200 × 200 px</b> (square). PNG or JPG, shown beside the clinic name on bills and in the app.</>
+                    : <>Recommended: <b>1200 × 200 px</b> (wide). PNG or JPG, shown full width above bill content and in the app.</>}
                 </span>
               </div>
             </div>
 
             {/* Identity */}
-            <div className="setting-divider">Clinic Identity</div>
+            <div className="setting-divider">Clinic identity</div>
             <div className="setting-row">
-              <label className="setting-label">Clinic Name</label>
+              <label className="setting-label">Clinic name</label>
               <input style={{ maxWidth: 340 }} placeholder="e.g. City Health Clinic"
                 value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} />
             </div>
@@ -843,9 +944,9 @@ function AppShell({ currentUser, role, onLogout }) {
             </div>
 
             {/* Doctor */}
-            <div className="setting-divider">Doctor / Practitioner</div>
+            <div className="setting-divider">Doctor or practitioner</div>
             <div className="setting-row">
-              <label className="setting-label">Doctor Name</label>
+              <label className="setting-label">Doctor name</label>
               <input style={{ maxWidth: 280 }} placeholder="Dr. Full Name"
                 value={profile.doctorName} onChange={e => setProfile({ ...profile, doctorName: e.target.value })} />
             </div>
@@ -855,7 +956,7 @@ function AppShell({ currentUser, role, onLogout }) {
                 value={profile.doctorQualification} onChange={e => setProfile({ ...profile, doctorQualification: e.target.value })} />
             </div>
             <div className="setting-row">
-              <label className="setting-label">Reg. Number</label>
+              <label className="setting-label">Registration number</label>
               <input style={{ maxWidth: 220 }} placeholder="MCI/State council reg. no."
                 value={profile.registrationNumber} onChange={e => setProfile({ ...profile, registrationNumber: e.target.value })} />
             </div>
@@ -863,30 +964,30 @@ function AppShell({ currentUser, role, onLogout }) {
             {/* Billing */}
             <div className="setting-divider">Billing</div>
             <div className="setting-row">
-              <label className="setting-label">Currency Symbol</label>
+              <label className="setting-label">Currency symbol</label>
               <input style={{ maxWidth: 80 }} placeholder="₹"
                 value={profile.currency} onChange={e => setProfile({ ...profile, currency: e.target.value })} />
             </div>
             <div className="setting-row" style={{ alignItems: 'flex-start' }}>
-              <label className="setting-label" style={{ paddingTop: '0.5rem' }}>Bill Footer</label>
+              <label className="setting-label" style={{ paddingTop: '0.5rem' }}>Bill footer</label>
               <textarea style={{ maxWidth: 420 }} rows={2}
                 placeholder="Thank you for your trust in us. Payment due within 7 days."
                 value={profile.footerMessage} onChange={e => setProfile({ ...profile, footerMessage: e.target.value })} />
             </div>
 
             <div className="form-actions" style={{ marginTop: '1rem' }}>
-              <button type="submit">Save Profile</button>
-              {profileSaved && <span className="saved-msg">Saved!</span>}
+              <button type="submit">Save profile</button>
+              {profileSaved && <span className="saved-msg">Saved</span>}
             </div>
           </form>
         </section>
         <section className="card">
-          <h2>Clinic Settings</h2>
+          <h2>Clinic settings</h2>
           <form onSubmit={saveClinic} className="form">
 
             {/* Work Days */}
             <div className="setting-row">
-              <label className="setting-label">Work Days</label>
+              <label className="setting-label">Work days</label>
               <div className="day-toggles">
                 {DAYS.map((d, i) => (
                   <button key={i} type="button"
@@ -897,19 +998,19 @@ function AppShell({ currentUser, role, onLogout }) {
             </div>
 
             {/* Clinic Hours */}
-            <div className="setting-divider">Clinic Hours</div>
+            <div className="setting-divider">Clinic hours</div>
             <div className="setting-row">
-              <label className="setting-label">Opening Time</label>
+              <label className="setting-label">Opening time</label>
               <TimePicker hourKey="startHour" periodKey="startPeriod" value={clinic}
                 onChange={v => setClinic({ ...clinic, startHour: v.startHour, startPeriod: v.startPeriod })} />
             </div>
             <div className="setting-row">
-              <label className="setting-label">Closing Time</label>
+              <label className="setting-label">Closing time</label>
               <TimePicker hourKey="endHour" periodKey="endPeriod" value={clinic}
                 onChange={v => setClinic({ ...clinic, endHour: v.endHour, endPeriod: v.endPeriod })} />
             </div>
             <div className="setting-row">
-              <label className="setting-label">Slot Duration</label>
+              <label className="setting-label">Slot duration</label>
               <select value={clinic.slotMinutes} style={{ maxWidth: 160 }}
                 onChange={e => setClinic({ ...clinic, slotMinutes: Number(e.target.value) })}>
                 <option value={15}>15 minutes</option>
@@ -920,19 +1021,19 @@ function AppShell({ currentUser, role, onLogout }) {
             </div>
 
             {/* Slot Mode Switch */}
-            <div className="setting-divider">Time Slot Display</div>
+            <div className="setting-divider">Time slot display</div>
             <div className="setting-row">
               <label className="setting-label">Show slots by</label>
               <div className="mode-toggle">
                 <button type="button"
                   className={clinic.slotMode === 'clinic' ? 'mode-btn active' : 'mode-btn'}
                   onClick={() => setClinic({ ...clinic, slotMode: 'clinic' })}>
-                  Clinic Hours
+                  Clinic hours
                 </button>
                 <button type="button"
                   className={clinic.slotMode === 'periods' ? 'mode-btn active' : 'mode-btn'}
                   onClick={() => setClinic({ ...clinic, slotMode: 'periods' })}>
-                  Time Periods
+                  Time periods
                 </button>
               </div>
             </div>
@@ -940,7 +1041,7 @@ function AppShell({ currentUser, role, onLogout }) {
             {/* Period config — only shown when mode is 'periods' */}
             {clinic.slotMode === 'periods' && (
               <>
-                <div className="setting-divider">Time Period Ranges</div>
+                <div className="setting-divider">Time period ranges</div>
                 {PERIOD_DEFS.map(({ key, label }) => {
                   const enabled = clinic.periods[key]?.enabled !== false;
                   return (
@@ -972,8 +1073,8 @@ function AppShell({ currentUser, role, onLogout }) {
             )}
 
             <div className="form-actions" style={{ marginTop: '1rem' }}>
-              <button type="submit">Save Settings</button>
-              {clinicSaved && <span className="saved-msg">Saved!</span>}
+              <button type="submit">Save settings</button>
+              {clinicSaved && <span className="saved-msg">Saved</span>}
             </div>
           </form>
         </section>
@@ -982,6 +1083,58 @@ function AppShell({ currentUser, role, onLogout }) {
       )}
       </div>{/* main-body */}
       </div>{/* main-content */}
+
+      {/* ── Tab bar (phone and tablet) ── */}
+      <nav className="tabbar" aria-label="Main navigation">
+        {barTabs.map(({ key, label, short, icon }) => (
+          <button
+            key={key}
+            type="button"
+            className={tab === key ? 'tab active' : 'tab'}
+            onClick={() => goTo(key)}
+            aria-current={tab === key ? 'page' : undefined}
+          >
+            <span className="tab-pill"><Icon name={icon} size={21} /></span>
+            {short || label}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={moreOpen || moreActive ? 'tab active' : 'tab'}
+          onClick={() => setMoreOpen(o => !o)}
+          aria-expanded={moreOpen}
+        >
+          <span className="tab-pill"><Icon name="more" size={21} /></span>
+          More
+        </button>
+      </nav>
+
+      {moreOpen && (
+        <>
+          <div className="more-backdrop" onClick={() => setMoreOpen(false)} />
+          <div className="more-sheet" role="dialog" aria-label="More options">
+            <div className="more-grab" />
+            <div className="more-who">
+              <div className="avatar">{userInitial}</div>
+              <div className="sidebar-user-text">
+                <div className="sidebar-user-name">{currentUser.name}</div>
+                <div className="sidebar-user-role">{role}</div>
+              </div>
+            </div>
+            {moreTabs.map(({ key, label, icon }) => (
+              <button key={key} type="button" className="more-item" onClick={() => goTo(key)}>
+                <Icon name={icon} />{label}
+              </button>
+            ))}
+            <button type="button" className="more-item" onClick={() => { setDarkMode(d => !d); setMoreOpen(false); }}>
+              <Icon name={darkMode ? 'sun' : 'moon'} />{darkMode ? 'Light mode' : 'Dark mode'}
+            </button>
+            <button type="button" className="more-item danger" onClick={onLogout}>
+              <Icon name="logout" />Sign out
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
