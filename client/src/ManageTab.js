@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Icon from './icons';
 import { PERMISSION_FEATURES, DEFAULT_ROLE_PERMS, loadRolePerms, licenseStatus } from './App';
 import './ManageTab.css';
 
@@ -50,7 +51,7 @@ function UsersSection({ currentUser }) {
       setSuccess(editing ? 'User updated.' : 'User created.'); setTimeout(() => setSuccess(''), 2500);
       cancel(); fetchUsers();
     } catch (err) {
-      setError('Network error — could not reach the server.');
+      setError('Network error. Could not reach the server.');
     } finally { setSaving(false); }
   }
 
@@ -71,7 +72,7 @@ function UsersSection({ currentUser }) {
     <section className="card">
       <div className="mg-section-head">
         <h2>Users</h2>
-        <button className="mg-add-btn" onClick={startAdd}>+ Add User</button>
+        <button className="mg-add-btn" onClick={startAdd}>Add user</button>
       </div>
 
       {success && <div className="mg-success">{success}</div>}
@@ -81,7 +82,7 @@ function UsersSection({ currentUser }) {
           <div className="mg-form-title">{editing ? 'Edit User' : 'New User'}</div>
           {error && <div className="mg-error">{error}</div>}
           <div className="mg-form-row">
-            <div className="mg-field"><label>Full Name</label>
+            <div className="mg-field"><label>Full name</label>
               <input value={form.name} required placeholder="Dr. Jane Smith" onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
             <div className="mg-field"><label>Username</label>
               <input value={form.username} required placeholder="janesmith" onChange={e => setForm(f => ({ ...f, username: e.target.value }))} /></div>
@@ -113,7 +114,7 @@ function UsersSection({ currentUser }) {
       )}
 
       {loading ? <p className="mg-empty">Loading…</p> : (
-        <table className="mg-table">
+        <div className="mg-table-wrap"><table className="mg-table">
           <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
             {users.map(u => (
@@ -134,16 +135,16 @@ function UsersSection({ currentUser }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
 
       <div className="mg-role-legend">
-        <div className="mg-legend-title">Role Reference</div>
+        <div className="mg-legend-title">Role reference</div>
         {[
-          { role: 'Admin',        desc: 'Full access — all modules, settings, users & licensing' },
-          { role: 'Doctor',       desc: 'Configurable via Role Permissions below' },
-          { role: 'Receptionist', desc: 'Configurable via Role Permissions below' },
-          { role: 'Nurse',        desc: 'Configurable via Role Permissions below' },
+          { role: 'Admin',        desc: 'Full access to every module, setting, user and the license' },
+          { role: 'Doctor',       desc: 'Set what this role can do under Role permissions below' },
+          { role: 'Receptionist', desc: 'Set what this role can do under Role permissions below' },
+          { role: 'Nurse',        desc: 'Set what this role can do under Role permissions below' },
         ].map(({ role, desc }) => (
           <div key={role} className="mg-legend-row">
             <span className={`mg-role-badge ${ROLE_COLORS[role]}`}>{role}</span>
@@ -177,7 +178,7 @@ function RolePermissionsSection({ onSaved }) {
   return (
     <section className="card">
       <div className="mg-section-head">
-        <h2>Role Permissions</h2>
+        <h2>Role permissions</h2>
         <button className="mg-reset-btn" onClick={resetDefaults} title="Reset to defaults">Reset defaults</button>
       </div>
       <p className="mg-hint">Admin always has full access and cannot be restricted. Changes take effect immediately after Save.</p>
@@ -202,7 +203,7 @@ function RolePermissionsSection({ onSaved }) {
                 </td>
                 {/* Admin — always locked on */}
                 <td className="rp-cell">
-                  <span className="rp-locked">✓</span>
+                  <span className="rp-locked"><Icon name="check" size={16} /></span>
                 </td>
                 {NON_ADMIN_ROLES.map(role => (
                   <td key={role} className="rp-cell">
@@ -223,7 +224,7 @@ function RolePermissionsSection({ onSaved }) {
       </div>
 
       <div className="mg-save-row">
-        <button className="mg-save-btn" onClick={save}>Save Permissions</button>
+        <button className="mg-save-btn" onClick={save}>Save permissions</button>
         {saved && <span className="mg-saved-msg">Saved!</span>}
       </div>
     </section>
@@ -257,15 +258,15 @@ function LicensingSection({ onSaved }) {
       setSaved(true); setTimeout(() => setSaved(false), 2000);
       onSaved();
     } catch {
-      setError('Cannot reach server — check your connection.');
+      setError('Cannot reach the server. Check your connection and try again.');
     } finally { setSaving(false); }
   }
 
   function statusBadge() {
-    if (status.noLicense) return <span className="lic-badge no-lic">No License</span>;
+    if (status.noLicense) return <span className="lic-badge no-lic">No license</span>;
     if (status.expired)   return <span className="lic-badge expired">Expired {Math.abs(status.daysLeft)} days ago</span>;
     if (status.daysLeft <= 30) return <span className="lic-badge warning">Expires in {status.daysLeft} days</span>;
-    return <span className="lic-badge active">Active · {status.daysLeft} days remaining</span>;
+    return <span className="lic-badge active">Active, {status.daysLeft} days remaining</span>;
   }
 
   return (
@@ -277,44 +278,44 @@ function LicensingSection({ onSaved }) {
 
       {status.expired && (
         <div className="lic-alert expired-alert">
-          ⚠ Your license expired on {lic.expiryDate}. Premium features (Prescription Pad, Lab Results) are locked.
+          Your license expired on {lic.expiryDate}. Premium features (prescriptions and lab results) are locked.
           Please renew to restore access.
         </div>
       )}
       {!status.expired && !status.noLicense && status.daysLeft <= 30 && (
         <div className="lic-alert warning-alert">
-          ⏳ License expires in {status.daysLeft} day{status.daysLeft !== 1 ? 's' : ''} on {lic.expiryDate}. Contact your provider to renew.
+          License expires in {status.daysLeft} day{status.daysLeft !== 1 ? 's' : ''} on {lic.expiryDate}. Contact your provider to renew.
         </div>
       )}
 
       <form onSubmit={save} className="lic-form">
         <div className="mg-form-row">
           <div className="mg-field">
-            <label>Licensed To (Clinic / Doctor Name)</label>
-            <input value={lic.licensedTo || ''} placeholder="Dr. Jane Smith — City Clinic"
+            <label>Licensed to (clinic or doctor name)</label>
+            <input value={lic.licensedTo || ''} placeholder="Dr. Jane Smith, City Clinic"
               onChange={e => setLic(l => ({ ...l, licensedTo: e.target.value }))} />
           </div>
           <div className="mg-field">
-            <label>License / Reference Code</label>
+            <label>License or reference code</label>
             <input value={lic.referenceCode || ''} placeholder="LIC-2024-XXXXX"
               onChange={e => setLic(l => ({ ...l, referenceCode: e.target.value }))} />
           </div>
         </div>
         <div className="mg-form-row">
           <div className="mg-field">
-            <label>License Start Date</label>
+            <label>License start date</label>
             <input type="date" value={lic.startDate || ''}
               onChange={e => setLic(l => ({ ...l, startDate: e.target.value }))} />
           </div>
           <div className="mg-field">
-            <label>License Expiry Date</label>
+            <label>License expiry date</label>
             <input type="date" value={lic.expiryDate || ''}
               onChange={e => setLic(l => ({ ...l, expiryDate: e.target.value }))} />
           </div>
         </div>
 
         <div className="lic-features">
-          <div className="mg-field-label">Premium Feature Access</div>
+          <div className="mg-field-label">Premium feature access</div>
           <p className="mg-hint">Control which premium modules are included in this license. Expired licenses lock all premium features regardless.</p>
           {PREMIUM_FEATURES.map(({ key, label, desc }) => (
             <div key={key} className="lic-feature-row">
@@ -338,7 +339,7 @@ function LicensingSection({ onSaved }) {
 
         {error && <p className="error" style={{ marginTop: '0.5rem' }}>{error}</p>}
         <div className="mg-save-row">
-          <button type="submit" className="mg-save-btn" disabled={saving}>{saving ? 'Saving…' : 'Save License'}</button>
+          <button type="submit" className="mg-save-btn" disabled={saving}>{saving ? 'Saving…' : 'Save license'}</button>
           {saved && <span className="mg-saved-msg">Saved!</span>}
         </div>
       </form>

@@ -2,7 +2,7 @@
 .rx-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.45);
+  background: rgba(27, 19, 23, 0.5);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -14,13 +14,13 @@
 .rx-modal {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   width: 100%;
   max-width: 820px;
   min-height: 300px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .rx-modal-header {
@@ -30,21 +30,11 @@
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border);
 }
-.rx-modal-title { font-size: 1.1rem; font-weight: 700; color: var(--text-1); }
+.rx-modal-title { font-size: 1.3rem; font-weight: 600; font-stretch: 108%; color: var(--text-1); line-height: 1.2; }
 .rx-modal-sub   { font-size: .85rem; color: var(--text-3); margin-top: .15rem; }
 
-.rx-close {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  width: 32px; height: 32px;
-  cursor: pointer;
-  color: var(--text-2);
-  font-size: 1rem;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.rx-close:hover { background: var(--surface-2); color: var(--text-1); }
+.rx-close { background: transparent; border: 1px solid transparent; border-radius: 12px; width: 40px; height: 40px; padding: 0; color: var(--text-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rx-close:hover { background: var(--surface-2); border-color: var(--border); color: var(--text-1); }
 
 /* ── List view ──────────────────────────────────────────────────── */
 .rx-list { padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: .75rem; }
@@ -54,12 +44,12 @@
   padding: 2.5rem 1rem;
   color: var(--text-3);
 }
-.rx-empty-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+.rx-empty-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--accent-light); color: var(--accent-text); display: grid; place-items: center; margin: 0 auto 0.9rem; }
 .rx-empty { color: var(--text-3); }
 
 .rx-new-btn {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: none;
   border-radius: 6px;
   padding: .4rem .85rem;
@@ -94,14 +84,14 @@
   border: 1px solid var(--border);
   border-radius: 5px;
   padding: .25rem .6rem;
-  font-size: .78rem;
+  font-size: 0.8rem;
   cursor: pointer;
   background: var(--surface);
   color: var(--text-2);
 }
-.rx-btn-print:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rx-btn-print:hover { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .rx-btn-edit:hover  { background: var(--surface-2); color: var(--text-1); }
-.rx-btn-delete:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+.rx-btn-delete:hover { background: var(--danger); color: var(--on-accent); border-color: var(--danger); }
 
 .rx-card-drugs { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
 .rx-drug-pill {
@@ -110,7 +100,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: .2rem .7rem;
-  font-size: .78rem;
+  font-size: 0.8rem;
 }
 .rx-drug-name   { font-weight: 600; color: var(--text-1); }
 .rx-drug-detail { color: var(--text-3); }
@@ -125,7 +115,7 @@
 .rx-form-row .rx-field { flex: 1; min-width: 180px; }
 
 .rx-field { display: flex; flex-direction: column; gap: .35rem; }
-.rx-field label { font-size: .82rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+.rx-field label { font-size: .82rem; font-weight: 600; color: var(--text-2); }
 .rx-field input, .rx-field textarea {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -143,19 +133,18 @@
 }
 
 .rx-error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
+  background: var(--danger-light);
+  color: var(--danger-text);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
   border-radius: 6px;
   padding: .6rem .9rem;
   font-size: .85rem;
 }
-[data-theme="dark"] .rx-error { background: rgba(239,68,68,.15); color: #fca5a5; border-color: rgba(239,68,68,.3); }
 
 /* Drugs table */
 .rx-drugs-section { display: flex; flex-direction: column; gap: .5rem; }
 .rx-drugs-header { display: flex; align-items: center; justify-content: space-between; }
-.rx-section-label { font-size: .82rem; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .06em; }
+.rx-section-label { font-size: .82rem; font-weight: 700; color: var(--text-2); }
 .rx-add-drug {
   background: var(--surface-2);
   border: 1px solid var(--accent);
@@ -165,7 +154,7 @@
   font-size: .8rem;
   cursor: pointer;
 }
-.rx-add-drug:hover { background: var(--accent); color: #fff; }
+.rx-add-drug:hover { background: var(--accent); color: var(--on-accent); }
 
 .rx-drugs-table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
 
@@ -178,9 +167,9 @@
   background: var(--surface-2);
   color: var(--text-2);
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: .72rem;
-  letter-spacing: .06em;
+
+  font-size: 0.8rem;
+
   padding: .55rem .7rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
@@ -217,16 +206,16 @@
   cursor: pointer;
   font-size: .85rem;
 }
-.rx-remove-drug:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+.rx-remove-drug:hover { background: var(--danger); color: var(--on-accent); border-color: var(--danger); }
 
 .rx-form-actions { display: flex; justify-content: flex-end; gap: .75rem; padding-top: .25rem; }
 .rx-form-actions button { padding: .55rem 1.4rem; border-radius: 6px; font-size: .9rem; cursor: pointer; border: 1px solid var(--border); }
-.rx-form-actions button[type="submit"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rx-form-actions button[type="submit"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .rx-form-actions button[type="submit"]:hover { opacity: .9; }
 .rx-form-actions button.secondary { background: var(--surface-2); color: var(--text-2); }
 .rx-form-actions button.secondary:hover { color: var(--text-1); }
-.rx-save-print-btn { background: var(--success) !important; color: #fff !important; border-color: var(--success) !important; }
-.rx-save-print-btn:hover { opacity: .88; }
+.rx-save-print-btn { background: var(--accent-light) !important; color: var(--accent-text) !important; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important; }
+.rx-save-print-btn:hover { border-color: var(--accent) !important; }
 
 /* ── Tablet / mobile ─────────────────────────────────────────────── */
 @media (max-width: 1280px) {

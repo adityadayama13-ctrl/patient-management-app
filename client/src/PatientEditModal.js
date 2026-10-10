@@ -1,12 +1,13 @@
 import { useState } from 'react';
+import Icon from './icons';
 import './PatientRegistration.css';
 import './PatientEditModal.css';
 
 const SECTIONS = [
-  { key: 'personal',   label: 'Personal Info',     icon: '👤' },
-  { key: 'contact',    label: 'Contact Details',   icon: '📞' },
-  { key: 'emergency',  label: 'Emergency Contact', icon: '🚨' },
-  { key: 'medical',    label: 'Medical Info',       icon: '🏥' },
+  { key: 'personal',   label: 'Personal info' },
+  { key: 'contact',    label: 'Contact details' },
+  { key: 'emergency',  label: 'Emergency contact' },
+  { key: 'medical',    label: 'Medical info' },
 ];
 
 export default function PatientEditModal({ patient, onClose, onSaved }) {
@@ -56,8 +57,8 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
       <div className="reg-modal edit-modal">
         {/* Header */}
         <div className="reg-header">
-          <h2>Edit Patient — {patient.firstName} {patient.lastName}</h2>
-          <button className="reg-close" onClick={onClose} type="button">✕</button>
+          <h2>Edit {patient.firstName} {patient.lastName}</h2>
+          <button className="reg-close" onClick={onClose} type="button" aria-label="Close"><Icon name="close" size={18} /></button>
         </div>
 
         {/* Section tabs */}
@@ -66,7 +67,7 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
             <button key={s.key} type="button"
               className={section === s.key ? 'edit-tab active' : 'edit-tab'}
               onClick={() => { setSection(s.key); setError(''); }}>
-              {s.icon} {s.label}
+              {s.label}
             </button>
           ))}
         </div>
@@ -79,17 +80,17 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
             <div className="reg-fields">
               <div className="reg-row">
                 <div className="reg-field">
-                  <label>First Name *</label>
+                  <label>First name *</label>
                   <input value={form.firstName} onChange={e => set('firstName', e.target.value)} placeholder="First name" />
                 </div>
                 <div className="reg-field">
-                  <label>Last Name *</label>
+                  <label>Last name *</label>
                   <input value={form.lastName} onChange={e => set('lastName', e.target.value)} placeholder="Last name" />
                 </div>
               </div>
               <div className="reg-row">
                 <div className="reg-field">
-                  <label>Date of Birth *</label>
+                  <label>Date of birth *</label>
                   <input type="date" value={form.dateOfBirth} onChange={e => set('dateOfBirth', e.target.value)} />
                 </div>
                 <div className="reg-field">
@@ -102,7 +103,7 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
               </div>
               <div className="reg-row">
                 <div className="reg-field">
-                  <label>Blood Type</label>
+                  <label>Blood type</label>
                   <select value={form.bloodType} onChange={e => set('bloodType', e.target.value)}>
                     <option value="">Select blood type</option>
                     {['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'].map(b => <option key={b}>{b}</option>)}
@@ -137,7 +138,7 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
             <div className="reg-fields">
               <div className="reg-row">
                 <div className="reg-field">
-                  <label>Contact Name</label>
+                  <label>Contact name</label>
                   <input value={form.emergencyContactName} onChange={e => set('emergencyContactName', e.target.value)} placeholder="Full name" />
                 </div>
                 <div className="reg-field">
@@ -150,7 +151,7 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
               </div>
               <div className="reg-row">
                 <div className="reg-field">
-                  <label>Contact Phone</label>
+                  <label>Contact phone</label>
                   <input value={form.emergencyContactPhone} onChange={e => set('emergencyContactPhone', e.target.value)} placeholder="Phone number" />
                 </div>
               </div>
@@ -161,17 +162,17 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
           {section === 'medical' && (
             <div className="reg-fields">
               <div className="reg-field">
-                <label>Known Allergies</label>
+                <label>Known allergies</label>
                 <textarea value={form.allergies} onChange={e => set('allergies', e.target.value)}
                   placeholder="e.g. Penicillin, Peanuts, Latex" rows={2} />
               </div>
               <div className="reg-field">
-                <label>Current Medications</label>
+                <label>Current medications</label>
                 <textarea value={form.currentMedications} onChange={e => set('currentMedications', e.target.value)}
                   placeholder="e.g. Metformin 500mg, Lisinopril 10mg" rows={2} />
               </div>
               <div className="reg-field">
-                <label>Existing Medical Conditions</label>
+                <label>Existing medical conditions</label>
                 <textarea value={form.medicalConditions} onChange={e => set('medicalConditions', e.target.value)}
                   placeholder="e.g. Type 2 Diabetes, Hypertension" rows={2} />
               </div>
@@ -181,7 +182,7 @@ export default function PatientEditModal({ patient, onClose, onSaved }) {
           <div className="reg-actions">
             <button type="button" className="secondary" onClick={onClose}>Cancel</button>
             <div />
-            <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
+            <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
           </div>
         </form>
       </div>

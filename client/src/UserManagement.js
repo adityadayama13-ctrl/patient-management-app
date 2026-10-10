@@ -75,8 +75,8 @@ export default function UserManagement({ currentUser }) {
   return (
     <section className="card">
       <div className="um-header">
-        <h2>User Management</h2>
-        <button className="um-add-btn" onClick={startAdd}>+ Add User</button>
+        <h2>User management</h2>
+        <button className="um-add-btn" onClick={startAdd}>Add user</button>
       </div>
 
       {success && <div className="um-success">{success}</div>}
@@ -87,7 +87,7 @@ export default function UserManagement({ currentUser }) {
           {error && <div className="um-error">{error}</div>}
           <div className="um-form-row">
             <div className="um-field">
-              <label>Full Name</label>
+              <label>Full name</label>
               <input value={form.name} placeholder="Dr. Jane Smith" required
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
             </div>
@@ -121,7 +121,7 @@ export default function UserManagement({ currentUser }) {
           )}
           <div className="um-form-actions">
             <button type="button" className="secondary" onClick={cancel}>Cancel</button>
-            <button type="submit" disabled={saving}>{saving ? 'Saving…' : editing ? 'Update' : 'Create User'}</button>
+            <button type="submit" disabled={saving}>{saving ? 'Saving…' : editing ? 'Update' : 'Create user'}</button>
           </div>
         </form>
       )}
@@ -160,7 +160,7 @@ export default function UserManagement({ currentUser }) {
       )}
 
       <div className="um-role-guide">
-        <div className="um-role-guide-title">Role Permissions</div>
+        <div className="um-role-guide-title">Role permissions</div>
         <div className="um-role-grid">
           {[
             { role: 'Admin',        perms: 'Full access — all modules, settings & user management' },
