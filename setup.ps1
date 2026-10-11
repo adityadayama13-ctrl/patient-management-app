@@ -1,9 +1,17 @@
-# Clinic Patient Management App - Setup Script
+﻿# Clinic Patient Management App - Setup Script
 # Run as Administrator via setup.bat
 # Node.js and node_modules are pre-bundled in this package.
 # This script sets up PostgreSQL, cleans residues, and creates the database.
 
 $AppDir        = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# ── Logging: capture full setup output to a file for troubleshooting ─────────
+$LogDir  = Join-Path $AppDir "logs"
+if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
+$LogFile = Join-Path $LogDir "setup-$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').log"
+try { Start-Transcript -Path $LogFile -Append -ErrorAction Stop | Out-Null } catch {}
+Write-Host "Logging this setup run to: $LogFile" -ForegroundColor Gray
+
 $PgPort        = "5432"
 $PgDb          = "clinic_db"
 $PgUser        = "postgres"
@@ -204,6 +212,8 @@ if (Test-Path $nodeExe) {
         Write-OK "System Node.js found: $(node --version)"
     } else {
         Write-Err "Node.js not found. Please re-extract the full app zip or install from https://nodejs.org"
+        Write-Info "Full log saved to: $LogFile"
+        try { Stop-Transcript | Out-Null } catch {}
         Read-Host "Press Enter to exit"; exit 1
     }
 }
@@ -233,6 +243,8 @@ if ($pgInstalled) {
     } catch {
         Write-Err "Failed to download/install PostgreSQL: $_"
         Write-Host "  Please install from https://www.postgresql.org then re-run setup." -ForegroundColor Yellow
+        Write-Info "Full log saved to: $LogFile"
+        try { Stop-Transcript | Out-Null } catch {}
         Read-Host "Press Enter to exit"; exit 1
     }
     $env:Path += ";C:\PostgreSQL\bin"
@@ -241,6 +253,8 @@ if ($pgInstalled) {
         Write-OK "PostgreSQL installed."
     } else {
         Write-Err "PostgreSQL installed but psql.exe not found. Please restart and re-run setup."
+        Write-Info "Full log saved to: $LogFile"
+        try { Stop-Transcript | Out-Null } catch {}
         Read-Host "Press Enter to exit"; exit 1
     }
 }
@@ -409,4 +423,6 @@ if ($skipDb) {
 Write-Host "  Run start.bat to launch the app." -ForegroundColor White
 Write-Host "============================================" -ForegroundColor Green
 Write-Host ""
+Write-Info "Full log saved to: $LogFile"
+try { Stop-Transcript | Out-Null } catch {}
 Read-Host "Press Enter to close"
