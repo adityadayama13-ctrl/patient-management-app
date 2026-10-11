@@ -6,7 +6,7 @@ function loadProfile() {
   try { return JSON.parse(localStorage.getItem('clinicProfile')) || {}; } catch { return {}; }
 }
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, notice }) {
   const profile = loadProfile();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +24,6 @@ export default function LoginScreen({ onLogin }) {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Login failed.'); return; }
-      sessionStorage.setItem('clinicUser', JSON.stringify(data));
       onLogin(data);
     } catch {
       setError('Cannot connect to server. Make sure the app is running.');
@@ -49,7 +48,8 @@ export default function LoginScreen({ onLogin }) {
             <p className="login-sub">Sign in to open today's schedule.</p>
           </div>
 
-          {error && <div className="login-error">{error}</div>}
+          {notice && !error && <div className="login-notice" role="status">{notice}</div>}
+          {error && <div className="login-error" role="alert">{error}</div>}
 
           <div className="login-field">
             <label>Username</label>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from './icons';
-import { PERMISSION_FEATURES, DEFAULT_ROLE_PERMS, loadRolePerms, licenseStatus } from './App';
+import { PERMISSION_FEATURES, DEFAULT_ROLE_PERMS, fetchRolePerms, saveRolePerms, licenseStatus } from './App';
 import './ManageTab.css';
 
 const ROLES = ['Admin', 'Doctor', 'Receptionist', 'Nurse'];
@@ -64,7 +64,8 @@ function UsersSection({ currentUser }) {
 
   async function toggleActive(u) {
     if (u.id === currentUser.id) { alert("You can't deactivate your own account."); return; }
-    await fetch(`/api/users/${u.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: !u.active }) });
+    const res = await fetch(`/api/users/${u.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: !u.active }) });
+    if (!res.ok) { alert((await res.json().catch(() => ({}))).error || 'Could not change this user.'); return; }
     fetchUsers();
   }
 
@@ -158,8 +159,11 @@ function UsersSection({ currentUser }) {
 
 // ── Role Permissions sub-section ──────────────────────────────────────────────
 function RolePermissionsSection({ onSaved }) {
-  const [perms, setPerms] = useState(loadRolePerms);
+  const [perms, setPerms] = useState(DEFAULT_ROLE_PERMS);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => { fetchRolePerms().then(s => setPerms(s.perms)); }, []);
 
   function toggle(role, feature) {
     setPerms(p => ({ ...p, [role]: { ...p[role], [feature]: !p[role][feature] } }));
@@ -169,10 +173,13 @@ function RolePermissionsSection({ onSaved }) {
     setPerms(DEFAULT_ROLE_PERMS);
   }
 
-  function save() {
-    localStorage.setItem('rolePermissions', JSON.stringify(perms));
-    setSaved(true); setTimeout(() => setSaved(false), 2000);
-    onSaved();
+  async function save() {
+    setError('');
+    try {
+      setPerms(await saveRolePerms(perms));
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+      onSaved();
+    } catch (e) { setError(e.message); }
   }
 
   return (
@@ -181,7 +188,8 @@ function RolePermissionsSection({ onSaved }) {
         <h2>Role permissions</h2>
         <button className="mg-reset-btn" onClick={resetDefaults} title="Reset to defaults">Reset defaults</button>
       </div>
-      <p className="mg-hint">Admin always has full access and cannot be restricted. Changes take effect immediately after Save.</p>
+      <p className="mg-hint">Admin always has full access and cannot be restricted. Changes apply on every device as soon as you save.</p>
+      {error && <div className="mg-error">{error}</div>}
 
       <div className="rp-table-wrap">
         <table className="rp-table">

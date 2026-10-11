@@ -14,7 +14,7 @@ import TodayTab from './TodayTab';
 import ToothRow from './ToothRow';
 import Icon from './icons';
 
-// ── Role permissions (dynamic, loaded from localStorage) ──────────────────────
+// ── Role permissions (shared by all devices, stored on the server) ───────────
 export const PERMISSION_FEATURES = [
   { key: 'editPatients',   label: 'Add / Edit / Delete Patients' },
   { key: 'appointments',   label: 'Appointments' },
@@ -31,15 +31,35 @@ export const DEFAULT_ROLE_PERMS = {
   Nurse:        { editPatients: false, appointments: false, billing: false, medicalRecords: true,  prescriptions: false, labResults: true,  whatsapp: false },
 };
 
-export function loadRolePerms() {
+// The server enforces these too; the app uses them to decide what to show.
+export async function fetchRolePerms() {
   try {
-    const saved = JSON.parse(localStorage.getItem('rolePermissions')) || {};
-    return {
-      Doctor:       { ...DEFAULT_ROLE_PERMS.Doctor,       ...(saved.Doctor       || {}) },
-      Receptionist: { ...DEFAULT_ROLE_PERMS.Receptionist, ...(saved.Receptionist || {}) },
-      Nurse:        { ...DEFAULT_ROLE_PERMS.Nurse,        ...(saved.Nurse        || {}) },
-    };
-  } catch { return DEFAULT_ROLE_PERMS; }
+    const r = await fetch('/api/settings/role-permissions');
+    return r.ok ? await r.json() : { perms: DEFAULT_ROLE_PERMS, saved: false };
+  } catch { return { perms: DEFAULT_ROLE_PERMS, saved: false }; }
+}
+
+export async function saveRolePerms(perms) {
+  const r = await fetch('/api/settings/role-permissions', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(perms),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Could not save permissions.');
+  return (await r.json()).perms;
+}
+
+// Earlier versions kept permissions in each browser. The first time an admin
+// signs in after the update, carry that browser's settings over to the server.
+async function migrateLocalRolePerms(serverState) {
+  let local = null;
+  try { local = JSON.parse(localStorage.getItem('rolePermissions')); } catch { /* ignore */ }
+  if (!local || serverState.saved) return serverState.perms;
+  const merged = {};
+  for (const role of Object.keys(DEFAULT_ROLE_PERMS)) merged[role] = { ...serverState.perms[role], ...(local[role] || {}) };
+  try {
+    const perms = await saveRolePerms(merged);
+    localStorage.removeItem('rolePermissions');
+    return perms;
+  } catch { return serverState.perms; }
 }
 
 // Admin always has full access; other roles read from stored perms
@@ -219,14 +239,39 @@ function patientSub(p) {
 }
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem('clinicUser')); } catch { return null; }
-  });
+  // undefined: still asking the server whether this device is signed in
+  const [currentUser, setCurrentUser] = useState(undefined);
+  const [notice, setNotice] = useState('');
 
-  function handleLogin(user) { setCurrentUser(user); }
-  function handleLogout() { sessionStorage.removeItem('clinicUser'); setCurrentUser(null); }
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/auth/me')
+      .then(r => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then(user => { if (!cancelled) setCurrentUser(user); });
+    return () => { cancelled = true; };
+  }, []);
 
-  if (!currentUser) return <LoginScreen onLogin={handleLogin} />;
+  useEffect(() => {
+    function onSignedOut() {
+      setCurrentUser(prev => {
+        if (prev) setNotice('You were signed out because the app was not used for a while, or your account was changed. Please sign in again.');
+        return null;
+      });
+    }
+    window.addEventListener('clinic:signed-out', onSignedOut);
+    return () => window.removeEventListener('clinic:signed-out', onSignedOut);
+  }, []);
+
+  function handleLogin(user) { setNotice(''); setCurrentUser(user); }
+  async function handleLogout() {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch { /* already signed out */ }
+    setNotice('');
+    setCurrentUser(null);
+  }
+
+  if (currentUser === undefined) return null;
+  if (!currentUser) return <LoginScreen onLogin={handleLogin} notice={notice} />;
 
   const role = currentUser.role;
 
@@ -256,17 +301,22 @@ function AppShell({ currentUser, role, onLogout }) {
   const [whatsappPatient, setWhatsappPatient] = useState(null);
   const [rxPatient, setRxPatient] = useState(null);
   const [labPatient, setLabPatient] = useState(null);
-  const [rolePerms, setRolePerms] = useState(loadRolePerms);
+  const [rolePerms, setRolePerms] = useState(DEFAULT_ROLE_PERMS);
   const [license, setLicense] = useState({});
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // Load license from DB on mount
+  // Load license and role permissions from the server on mount
   useEffect(() => { fetchLicenseFromDB().then(setLicense); }, []);
+  useEffect(() => {
+    fetchRolePerms()
+      .then(state => (role === 'Admin' ? migrateLocalRolePerms(state) : state.perms))
+      .then(setRolePerms);
+  }, [role]);
 
   // Reload perms/license when Manage tab saves changes
   async function refreshPermsAndLicense() {
-    const newPerms = loadRolePerms();
+    const newPerms = (await fetchRolePerms()).perms;
     const newLic   = await fetchLicenseFromDB();
     setRolePerms(newPerms);
     setLicense(newLic);
