@@ -766,7 +766,10 @@ sequelize.sync({ alter: true })
       console.log('Default admin created — username: admin  password: admin123');
     }
     startWhatsAppScheduler();
-    app.listen(PORT, () => {
+    // HOST=127.0.0.1 (set by the installer for single-PC clinics) keeps the app
+    // reachable from this PC only; unset, it listens on the whole network.
+    const listenArgs = process.env.HOST ? [PORT, process.env.HOST] : [PORT];
+    app.listen(...listenArgs, () => {
       console.log(`Server running on port ${PORT}`);
     });
   })

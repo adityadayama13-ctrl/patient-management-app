@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import './WhatsAppSettings.css';
 
 const OCCASIONS = [
-  { label: '🎉 New Year',  template: 'happy_new_year' },
-  { label: '🪔 Diwali',    template: 'happy_diwali' },
-  { label: '🎄 Christmas', template: 'happy_christmas' },
-  { label: '☪️ Eid',       template: 'eid_mubarak' },
-  { label: '🎨 Holi',      template: 'happy_holi' },
-  { label: '🎊 Navratri',  template: 'happy_navratri' },
-  { label: '✏️ Custom',    template: '' },
+  { label: 'New Year',  template: 'happy_new_year' },
+  { label: 'Diwali',    template: 'happy_diwali' },
+  { label: 'Christmas', template: 'happy_christmas' },
+  { label: 'Eid',       template: 'eid_mubarak' },
+  { label: 'Holi',      template: 'happy_holi' },
+  { label: 'Navratri',  template: 'happy_navratri' },
+  { label: 'Custom',    template: '' },
 ];
 
 function BroadcastSection() {
@@ -67,15 +67,15 @@ function BroadcastSection() {
   return (
     <section className="card wa-broadcast-card">
       <div className="wa-broadcast-head">
-        <h2>Broadcast Message</h2>
-        <span className="wa-bulk-badge">Bulk Send</span>
+        <h2>Broadcast message</h2>
+        <span className="wa-bulk-badge">Bulk send</span>
       </div>
       <p className="wa-broadcast-desc">
         Send a festival greeting or announcement to all (or filtered) patients at once.
         The template must be pre-approved in your Meta Business Manager.
       </p>
 
-      <div className="setting-divider">Occasion Presets</div>
+      <div className="setting-divider">Occasion presets</div>
       <div className="wa-occasion-grid">
         {OCCASIONS.map(o => (
           <button key={o.label} type="button"
@@ -88,13 +88,13 @@ function BroadcastSection() {
 
       <div className="setting-divider">Template</div>
       <div className="setting-row">
-        <label className="setting-label">Template Name</label>
+        <label className="setting-label">Template name</label>
         <input style={{ maxWidth: 280 }} placeholder="e.g. happy_diwali"
           value={templateName}
           onChange={e => { setTemplateName(e.target.value); setPreviewCount(null); }} />
       </div>
       <div className="setting-row">
-        <label className="setting-label">Patient Name</label>
+        <label className="setting-label">Patient name</label>
         <label className="wa-toggle">
           <input type="checkbox" checked={includePatientName}
             onChange={e => setIncludePatientName(e.target.checked)} />
@@ -105,7 +105,7 @@ function BroadcastSection() {
       </div>
 
       <div className="setting-divider">
-        Filter Recipients
+        Filter recipients
         <button type="button" className="wa-reset-filter" onClick={resetFilter}>Reset</button>
       </div>
       <div className="wa-filter-row">
@@ -120,13 +120,13 @@ function BroadcastSection() {
           </select>
         </div>
         <div className="wa-filter-field">
-          <label>Min Age</label>
+          <label>Minimum age</label>
           <input type="number" min="0" max="120" placeholder="Any"
             value={filter.minAge}
             onChange={e => { setFilter(f => ({ ...f, minAge: e.target.value })); setPreviewCount(null); }} />
         </div>
         <div className="wa-filter-field">
-          <label>Max Age</label>
+          <label>Maximum age</label>
           <input type="number" min="0" max="120" placeholder="Any"
             value={filter.maxAge}
             onChange={e => { setFilter(f => ({ ...f, maxAge: e.target.value })); setPreviewCount(null); }} />
@@ -148,7 +148,7 @@ function BroadcastSection() {
 
       <div className="wa-broadcast-actions">
         <button type="button" className="secondary" onClick={handlePreview} disabled={previewing}>
-          {previewing ? 'Counting…' : 'Preview Recipients'}
+          {previewing ? 'Counting…' : 'Preview recipients'}
         </button>
         {previewCount !== null && (
           <span className="wa-preview-count">
@@ -159,7 +159,7 @@ function BroadcastSection() {
         )}
         <button type="button" className="wa-send-btn" onClick={handleSend}
           disabled={sending || !templateName.trim()}>
-          {sending ? 'Sending…' : '📣 Send Broadcast'}
+          {sending ? 'Sending…' : 'Send broadcast'}
         </button>
       </div>
     </section>
@@ -210,7 +210,7 @@ export default function WhatsAppSettings() {
       });
       const res = await fetch('/api/whatsapp/test', { method: 'POST' });
       const data = await res.json();
-      setTestResult(res.ok ? { ok: true, msg: `Connected — ${data.name}` } : { ok: false, msg: data.error });
+      setTestResult(res.ok ? { ok: true, msg: `Connected to ${data.name}` } : { ok: false, msg: data.error });
     } catch {
       setTestResult({ ok: false, msg: 'Network error. Could not reach server.' });
     }
@@ -224,9 +224,9 @@ export default function WhatsAppSettings() {
         <b>Setup steps:</b>
         <ol>
           <li>Go to <b>Meta for Developers → WhatsApp → Getting Started</b></li>
-          <li>Copy your <b>Phone Number ID</b> and generate a <b>permanent System User token</b></li>
+          <li>Copy your <b>Phone number ID</b> and generate a <b>permanent System User token</b></li>
           <li>Submit two message templates to Meta for approval (names below)</li>
-          <li>Paste credentials here and click <b>Test Connection</b></li>
+          <li>Paste credentials here and click <b>Test connection</b></li>
         </ol>
       </div>
 
@@ -242,28 +242,28 @@ export default function WhatsAppSettings() {
           </label>
         </div>
         <div className="setting-row">
-          <label className="setting-label">Phone Number ID</label>
+          <label className="setting-label">Phone number ID</label>
           <input style={{ maxWidth: 300 }} placeholder="From Meta Developer Console"
             value={cfg.phoneNumberId} onChange={e => set('phoneNumberId', e.target.value)} />
         </div>
         <div className="setting-row">
-          <label className="setting-label">Access Token</label>
+          <label className="setting-label">Access token</label>
           <input style={{ maxWidth: 400 }} placeholder="Permanent System User token"
             value={cfg.accessToken} onChange={e => set('accessToken', e.target.value)} />
         </div>
         <div className="setting-row">
-          <label className="setting-label">Language Code</label>
+          <label className="setting-label">Language code</label>
           <input style={{ maxWidth: 100 }} placeholder="en"
             value={cfg.languageCode} onChange={e => set('languageCode', e.target.value)} />
           <span className="wa-hint">e.g. en, en_US, hi</span>
         </div>
 
-        <div className="setting-divider">Message Templates</div>
+        <div className="setting-divider">Message templates</div>
         <div className="wa-template-note">
           Template names must match what you submitted to Meta for approval exactly.
         </div>
         <div className="setting-row">
-          <label className="setting-label">Follow-up Template</label>
+          <label className="setting-label">Follow-up template</label>
           <input style={{ maxWidth: 280 }} placeholder="follow_up_reminder"
             value={cfg.followUpTemplate} onChange={e => set('followUpTemplate', e.target.value)} />
         </div>
@@ -271,7 +271,7 @@ export default function WhatsAppSettings() {
           Sample body: <em>"Hello &#123;&#123;1&#125;&#125;, this is a reminder for your follow-up visit at our clinic today. Please call us to confirm. — Dr. Team"</em>
         </div>
         <div className="setting-row">
-          <label className="setting-label">Birthday Template</label>
+          <label className="setting-label">Birthday template</label>
           <input style={{ maxWidth: 280 }} placeholder="birthday_wish"
             value={cfg.birthdayTemplate} onChange={e => set('birthdayTemplate', e.target.value)} />
         </div>
@@ -288,7 +288,7 @@ export default function WhatsAppSettings() {
         <div className="form-actions" style={{ marginTop: '1rem', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button type="submit">Save</button>
           <button type="button" className="secondary" onClick={handleTest} disabled={testing || !cfg.phoneNumberId}>
-            {testing ? 'Testing…' : 'Test Connection'}
+            {testing ? 'Testing…' : 'Test connection'}
           </button>
           {saved && <span className="saved-msg">Saved!</span>}
           {testResult && (

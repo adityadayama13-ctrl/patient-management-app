@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import Icon from './icons';
 import './PrescriptionModal.css';
 
 const FREQUENCIES = [
@@ -234,10 +235,10 @@ export default function PrescriptionModal({ patient, onClose }) {
         <div className="rx-modal">
           <div className="rx-modal-header">
             <div>
-              <div className="rx-modal-title">{editing ? 'Edit Prescription' : 'New Prescription'}</div>
+              <div className="rx-modal-title">{editing ? 'Edit prescription' : 'New prescription'}</div>
               <div className="rx-modal-sub">{patient.firstName} {patient.lastName}</div>
             </div>
-            <button className="rx-close" onClick={onClose} type="button">✕</button>
+            <button className="rx-close" onClick={onClose} type="button" aria-label="Close"><Icon name="close" size={18} /></button>
           </div>
 
           <form onSubmit={handleSave} className="rx-form">
@@ -245,19 +246,19 @@ export default function PrescriptionModal({ patient, onClose }) {
 
             <div className="rx-form-row">
               <div className="rx-field">
-                <label>Visit Date</label>
+                <label>Visit date</label>
                 <input type="date" value={form.visitDate}
                   onChange={e => setForm(f => ({ ...f, visitDate: e.target.value }))} required />
               </div>
               <div className="rx-field">
-                <label>Doctor Name</label>
+                <label>Doctor name</label>
                 <input value={form.doctorName} placeholder={profile.doctorName || 'Doctor name'}
                   onChange={e => setForm(f => ({ ...f, doctorName: e.target.value }))} />
               </div>
             </div>
 
             <div className="rx-field">
-              <label>Diagnosis / Chief Complaint</label>
+              <label>Diagnosis or chief complaint</label>
               <input value={form.diagnosis} placeholder="e.g. Acute pharyngitis, Type 2 Diabetes follow-up"
                 onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))} />
             </div>
@@ -266,7 +267,7 @@ export default function PrescriptionModal({ patient, onClose }) {
             <div className="rx-drugs-section">
               <div className="rx-drugs-header">
                 <span className="rx-section-label">℞ Medicines</span>
-                <button type="button" className="rx-add-drug" onClick={addDrug}>+ Add Medicine</button>
+                <button type="button" className="rx-add-drug" onClick={addDrug}>Add medicine</button>
               </div>
 
               <div className="rx-drugs-table-wrap">
@@ -309,7 +310,7 @@ export default function PrescriptionModal({ patient, onClose }) {
                         </td>
                         <td>
                           {form.drugs.length > 1 && (
-                            <button type="button" className="rx-remove-drug" onClick={() => removeDrug(i)}>✕</button>
+                            <button type="button" className="rx-remove-drug" onClick={() => removeDrug(i)} aria-label="Remove medicine"><Icon name="close" size={16} /></button>
                           )}
                         </td>
                       </tr>
@@ -320,7 +321,7 @@ export default function PrescriptionModal({ patient, onClose }) {
             </div>
 
             <div className="rx-field">
-              <label>Additional Notes / Instructions</label>
+              <label>Additional notes or instructions</label>
               <textarea value={form.notes} rows={2}
                 placeholder="e.g. Rest advised for 3 days. Review if fever persists."
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
@@ -331,7 +332,7 @@ export default function PrescriptionModal({ patient, onClose }) {
               <button type="submit" disabled={saving}>{saving ? 'Saving…' : editing ? 'Update' : 'Save'}</button>
               <button type="button" className="rx-save-print-btn" disabled={saving}
                 onClick={e => handleSave(e, true)}>
-                {saving ? 'Saving…' : '🖨 Save & Print'}
+                {saving ? 'Saving…' : 'Save and print'}
               </button>
             </div>
           </form>
@@ -350,8 +351,8 @@ export default function PrescriptionModal({ patient, onClose }) {
             <div className="rx-modal-sub">{patient.firstName} {patient.lastName}</div>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button onClick={startNew} className="rx-new-btn">+ New Prescription</button>
-            <button className="rx-close" onClick={onClose} type="button">✕</button>
+            <button onClick={startNew} className="rx-new-btn">New prescription</button>
+            <button className="rx-close" onClick={onClose} type="button" aria-label="Close"><Icon name="close" size={18} /></button>
           </div>
         </div>
 
@@ -359,9 +360,9 @@ export default function PrescriptionModal({ patient, onClose }) {
           {loading && <p className="rx-empty">Loading…</p>}
           {!loading && prescriptions.length === 0 && (
             <div className="rx-empty-state">
-              <div className="rx-empty-icon">📋</div>
+              <div className="rx-empty-icon"><Icon name="records" size={28} /></div>
               <p>No prescriptions yet for this patient.</p>
-              <button onClick={startNew}>Write First Prescription</button>
+              <button onClick={startNew}>Write the first prescription</button>
             </div>
           )}
           {prescriptions.map(rx => (
@@ -373,7 +374,7 @@ export default function PrescriptionModal({ patient, onClose }) {
                   {rx.diagnosis && <span className="rx-card-diagnosis">{rx.diagnosis}</span>}
                 </div>
                 <div className="rx-card-actions">
-                  <button className="rx-btn-print" onClick={() => printRxSlip(rx, patient)}>🖨 Print</button>
+                  <button className="rx-btn-print" onClick={() => printRxSlip(rx, patient)}>Print</button>
                   <button className="rx-btn-edit" onClick={() => startEdit(rx)}>Edit</button>
                   <button className="rx-btn-delete" onClick={() => handleDelete(rx.id)}>Delete</button>
                 </div>

@@ -1,9 +1,23 @@
-# Clinic Patient Management App - Setup Script
+﻿# Clinic Patient Management App - Setup Script
 # Run as Administrator via setup.bat
 # Node.js and node_modules are pre-bundled in this package.
 # This script sets up PostgreSQL, cleans residues, and creates the database.
 
+param(
+    [ValidateSet("Server", "Standalone")]
+    [string]$Mode = "Server",   # Server: open the firewall so other devices can connect
+    [switch]$FromInstaller      # run by Setup.exe: no final pause, keep existing data
+)
+
 $AppDir        = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# ── Logging: capture full setup output to a file for troubleshooting ─────────
+$LogDir  = Join-Path $AppDir "logs"
+if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
+$LogFile = Join-Path $LogDir "setup-$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').log"
+try { Start-Transcript -Path $LogFile -Append -ErrorAction Stop | Out-Null } catch {}
+Write-Host "Logging this setup run to: $LogFile" -ForegroundColor Gray
+
 $PgPort        = "5432"
 $PgDb          = "clinic_db"
 $PgUser        = "postgres"
@@ -15,6 +29,11 @@ function Write-OK($msg)   { Write-Host "    [OK] $msg" -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "    [!!] $msg" -ForegroundColor Yellow }
 function Write-Err($msg)  { Write-Host "`n[ERROR] $msg`n" -ForegroundColor Red }
 function Write-Info($msg) { Write-Host "    --> $msg" -ForegroundColor Gray }
+function Exit-Setup($code) {
+    try { Stop-Transcript | Out-Null } catch {}
+    if (-not $FromInstaller) { Read-Host "Press Enter to exit" | Out-Null }
+    exit $code
+}
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -102,8 +121,8 @@ foreach ($pidFile in $stalePidPaths) {
     if (Test-Path $pidFile) {
         # Check if the PID inside is actually running
         $pidContent = Get-Content $pidFile -ErrorAction SilentlyContinue
-        $pid = if ($pidContent) { [int]($pidContent[0].Trim()) } else { 0 }
-        $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
+        $pgPid = if ($pidContent) { [int]($pidContent[0].Trim()) } else { 0 }
+        $proc = Get-Process -Id $pgPid -ErrorAction SilentlyContinue
         if (-not $proc) {
             Write-Warn "Stale PostgreSQL PID file found (process no longer running): $pidFile"
             try {
@@ -174,7 +193,10 @@ if (-not $cleanupDone) {
     Write-OK "No residues found — system is clean."
 }
 
-# ── 0g: Add/refresh Windows Firewall rule for port 5000 ──────────────────────
+# ── 0g: Add/refresh Windows Firewall rule for port 5000 (Server mode only) ───
+if ($Mode -eq "Standalone") {
+    Write-Info "Standalone mode: the app will only be reachable from this PC (no firewall rule)."
+} else {
 try {
     New-NetFirewallRule -DisplayName "Clinic App (Port 5000)" `
         -Direction Inbound -Protocol TCP -LocalPort 5000 `
@@ -185,6 +207,7 @@ try {
 } catch {
     Write-Warn "Could not set firewall rule automatically: $_"
     Write-Info "Run setup-firewall.bat as Administrator to set it manually."
+}
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -204,7 +227,8 @@ if (Test-Path $nodeExe) {
         Write-OK "System Node.js found: $(node --version)"
     } else {
         Write-Err "Node.js not found. Please re-extract the full app zip or install from https://nodejs.org"
-        Read-Host "Press Enter to exit"; exit 1
+        Write-Info "Full log saved to: $LogFile"
+        Exit-Setup 1
     }
 }
 
@@ -233,7 +257,8 @@ if ($pgInstalled) {
     } catch {
         Write-Err "Failed to download/install PostgreSQL: $_"
         Write-Host "  Please install from https://www.postgresql.org then re-run setup." -ForegroundColor Yellow
-        Read-Host "Press Enter to exit"; exit 1
+        Write-Info "Full log saved to: $LogFile"
+        Exit-Setup 1
     }
     $env:Path += ";C:\PostgreSQL\bin"
     $psqlPath = Get-PsqlPath
@@ -241,7 +266,8 @@ if ($pgInstalled) {
         Write-OK "PostgreSQL installed."
     } else {
         Write-Err "PostgreSQL installed but psql.exe not found. Please restart and re-run setup."
-        Read-Host "Press Enter to exit"; exit 1
+        Write-Info "Full log saved to: $LogFile"
+        Exit-Setup 1
     }
 }
 
@@ -321,7 +347,9 @@ if ($skipDb) {
     $check = Invoke-Psql $psqlPath $PgPass "SELECT 1 FROM pg_database WHERE datname='$PgDb'"
     $dbExists = ($check.Output -match "1")
 
-    if ($dbExists) {
+    if ($dbExists -and $FromInstaller) {
+        Write-OK "Database '$PgDb' already exists - keeping existing data."
+    } elseif ($dbExists) {
         Write-Host ""
         Write-Host "    Database '$PgDb' already exists from a previous installation." -ForegroundColor Yellow
         Write-Host ""
@@ -392,6 +420,13 @@ PORT=5000
     }
 }
 
+# HOST: Standalone keeps the app reachable from this PC only; Server listens on the network.
+$envText = Get-Content $envPath -Raw
+$envText = ($envText -split "`r?`n" | Where-Object { $_ -notmatch "^HOST=" -and $_ -ne "" }) -join "`r`n"
+if ($Mode -eq "Standalone") { $envText += "`r`nHOST=127.0.0.1" }
+Set-Content $envPath ($envText + "`r`n") -Encoding utf8
+Write-OK "Mode: $Mode."
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Done
 # ══════════════════════════════════════════════════════════════════════════════
@@ -406,7 +441,10 @@ if ($skipDb) {
     Write-Host "  and create database '$PgDb' manually." -ForegroundColor Yellow
     Write-Host ""
 }
-Write-Host "  Run start.bat to launch the app." -ForegroundColor White
+if (-not $FromInstaller) { Write-Host "  Run start.bat to launch the app." -ForegroundColor White }
 Write-Host "============================================" -ForegroundColor Green
 Write-Host ""
-Read-Host "Press Enter to close"
+Write-Info "Full log saved to: $LogFile"
+try { Stop-Transcript | Out-Null } catch {}
+if (-not $FromInstaller) { Read-Host "Press Enter to close" | Out-Null }
+if ($skipDb) { exit 2 }
