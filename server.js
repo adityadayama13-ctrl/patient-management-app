@@ -10,6 +10,7 @@ const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { requireAuth, router: authRouter, revokeUserSessions } = require('./auth');
+const { router: dentalRouter } = require('./dental');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,6 +25,7 @@ app.use(express.json({ limit: '2mb' }));
 // Sign-in and role checks for every /api and /uploads request (see auth.js)
 app.use(requireAuth);
 app.use(authRouter);
+app.use(dentalRouter);
 
 // ── File upload (lab results) ─────────────────────────────────────────────────
 const UPLOADS_DIR = path.join(__dirname, 'uploads', 'labs');

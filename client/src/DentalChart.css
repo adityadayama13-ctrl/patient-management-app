@@ -1,0 +1,200 @@
+/* ── Dental chart ────────────────────────────────────────────────────────────
+   Condition tones are set as custom properties so the same class colours a
+   tooth, a legend swatch or a choice button. */
+.tone-sound   { --t-fill: var(--surface);       --t-stroke: var(--tooth-line);    --t-text: var(--text-2); }
+.tone-danger  { --t-fill: var(--danger-light);  --t-stroke: var(--danger);        --t-text: var(--danger-text); }
+.tone-accent  { --t-fill: var(--accent-light);  --t-stroke: var(--accent);        --t-text: var(--accent-text); }
+.tone-warning { --t-fill: var(--warning-light); --t-stroke: var(--warning);       --t-text: var(--warning-text); }
+.tone-success { --t-fill: var(--success-light); --t-stroke: var(--success);       --t-text: var(--success-text); }
+.tone-muted   { --t-fill: var(--border-soft);   --t-stroke: var(--text-3);        --t-text: var(--text-2); }
+.tone-missing { --t-fill: transparent;          --t-stroke: var(--text-3);        --t-text: var(--text-3); }
+
+.dc-wrap {
+  --tooth-line: color-mix(in srgb, var(--text-3) 62%, transparent);
+  padding: 1rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+}
+.dc-muted { color: var(--text-2); margin: 0; }
+.dc-hint { color: var(--text-2); font-size: 0.9rem; margin: 0; }
+.dc-error {
+  background: var(--danger-light); color: var(--danger-text);
+  border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; font-size: 0.92rem;
+}
+.dc-success {
+  background: var(--success-light); color: var(--success-text);
+  border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; font-size: 0.92rem;
+}
+
+.dc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; flex-wrap: wrap; }
+
+/* Adult / Milk / Mixed switch */
+.dc-seg {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-full);
+}
+.dc-seg button {
+  background: transparent; color: var(--text-2); border: 1px solid transparent;
+  border-radius: var(--radius-full); padding: 0.42rem 0.95rem; font-size: 0.88rem; font-weight: 580;
+}
+.dc-seg button:hover { background: var(--accent-light); color: var(--accent-text); }
+.dc-seg button.is-on { background: var(--surface); color: var(--text-1); border-color: var(--border-strong); }
+
+/* The chart itself */
+.dc-chart {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  padding: 0.75rem 0.5rem 0.9rem; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+}
+.dc-side-labels {
+  display: flex; justify-content: space-between; padding: 0 0.4rem;
+  font-size: 0.78rem; color: var(--text-3); font-weight: 560;
+}
+.dc-arch { display: flex; justify-content: center; }
+.dc-bite { padding-bottom: 0.55rem; margin-bottom: 0.2rem; border-bottom: 1.5px dashed var(--border-strong); }
+.dc-half { display: flex; gap: 2px; flex: 1 1 0; min-width: 0; }
+.dc-half-right { justify-content: flex-end; padding-right: 6px; border-right: 1.5px solid var(--border-strong); }
+.dc-half-left  { justify-content: flex-start; padding-left: 6px; }
+
+.tooth-btn {
+  flex: 1 1 0; min-width: 0; max-width: 52px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 1px; background: transparent; color: var(--text-2);
+  border: 1px solid transparent; border-radius: 10px; font-weight: 600;
+}
+.tooth-btn:hover { background: var(--surface-2); color: var(--text-1); }
+.tooth-btn:active { transform: none; }
+.tooth-btn.is-selected { background: var(--accent-light); border-color: var(--accent); color: var(--accent-text); }
+.tooth-btn:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 1px; }
+
+.tooth-num { font-size: 0.74rem; font-variant-numeric: tabular-nums; line-height: 1; display: inline-flex; align-items: center; gap: 2px; min-height: 0.8rem; }
+.tooth-glyph { width: 100%; max-width: 36px; height: auto; display: block; overflow: visible; }
+
+.tg-crown { fill: var(--t-fill); stroke: var(--t-stroke); stroke-width: 1.2; }
+.tg-root  { fill: var(--surface-2); stroke: var(--tooth-line); stroke-width: 1; }
+.tg-implant { fill: var(--success-light); stroke: var(--success); stroke-dasharray: 2 1.5; }
+.tg-canal { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; }
+.tg-code  { font-size: 8.5px; font-weight: 700; fill: var(--t-text); font-family: inherit; }
+.tg-cross { stroke: var(--danger); stroke-width: 1.8; stroke-linecap: round; }
+.tone-missing .tooth-glyph { opacity: 0.45; }
+.tone-missing .tg-crown, .tone-missing .tg-root { fill: none; stroke: var(--text-3); stroke-dasharray: 2.5 2; }
+.tone-muted .tg-crown { stroke-dasharray: 2.5 1.5; }
+
+.plan-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); flex: none;
+}
+
+/* Key */
+.dc-legend {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 0.45rem 1rem; font-size: 0.85rem; color: var(--text-2);
+}
+.dc-legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.cond-swatch {
+  display: inline-grid; place-items: center; flex: none;
+  width: 22px; height: 22px; border-radius: 7px;
+  background: var(--t-fill); border: 1.5px solid var(--t-stroke); color: var(--t-text);
+  font-size: 0.68rem; font-weight: 700; line-height: 1;
+}
+.tone-missing .cond-swatch, .cond-swatch.tone-missing, .tone-muted .cond-swatch, .cond-swatch.tone-muted { border-style: dashed; }
+
+/* Selected tooth */
+.tooth-panel {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-2); padding: 1rem 1.15rem 1.15rem;
+}
+.tooth-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem; }
+.tooth-panel-head h3 { margin: 0; font-size: 1.15rem; }
+.tooth-panel-sub { margin: 0.15rem 0 0; color: var(--text-2); font-size: 0.9rem; }
+.cond-pill {
+  border-radius: var(--radius-full); padding: 0.25rem 0.8rem; font-size: 0.85rem; font-weight: 600;
+  background: var(--t-fill); color: var(--t-text); border: 1px solid var(--t-stroke); white-space: nowrap;
+}
+.tooth-panel-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+.tooth-panel h4 { margin: 0 0 0.55rem; font-size: 0.95rem; font-weight: 620; color: var(--text-1); }
+.dc-subhead { margin-top: 1.1rem !important; }
+
+.cond-options { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.8rem; }
+.cond-option {
+  background: var(--surface); color: var(--text-1); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full); padding: 0.3rem 0.75rem 0.3rem 0.3rem; font-size: 0.87rem; font-weight: 560; gap: 0.45rem;
+}
+.cond-option .cond-swatch { width: 20px; height: 20px; border-radius: 50%; }
+.cond-option:hover { background: var(--accent-light); color: var(--accent-text); border-color: var(--accent); }
+.cond-option.is-on { background: var(--accent-light); color: var(--accent-text); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+
+.dc-field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.7rem; }
+.dc-field span { font-size: 0.88rem; font-weight: 580; color: var(--text-1); }
+
+.cond-history, .tooth-plan { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cond-history li, .tooth-plan li {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.55rem 0; border-top: 1px solid var(--border-soft);
+}
+.cond-history li > div, .tooth-plan li > div:first-child { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.cond-history-label, .tooth-plan-name { font-weight: 600; color: var(--text-1); }
+.cond-history-meta, .tooth-plan-meta { font-size: 0.84rem; color: var(--text-2); }
+.cond-history-note { font-size: 0.88rem; color: var(--text-1); }
+.tooth-plan-actions { display: flex; align-items: center; gap: 0.35rem; flex: none; }
+
+.dc-icon-btn {
+  background: transparent; color: var(--text-2); border: 1px solid transparent;
+  width: 36px; height: 36px; padding: 0; border-radius: 10px; flex: none;
+}
+.dc-icon-btn:hover { background: var(--danger-light); color: var(--danger-text); }
+.dc-small { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+.dc-undo { font-size: 0.85rem; padding: 0.4rem 0.3rem; }
+
+.plan-form { margin-top: 0.9rem; display: flex; flex-direction: column; }
+.plan-form .dc-price input { max-width: 160px; }
+.plan-form > button { align-self: flex-start; }
+
+/* Treatment plan for the whole mouth */
+.dc-plan-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.dc-plan-head h3 { margin: 0; font-size: 1.1rem; }
+.dc-plan .dc-success { margin-bottom: 0.6rem; }
+.dc-plan-list { list-style: none; margin: 0; padding: 0; }
+.dc-plan-row {
+  display: grid; grid-template-columns: auto auto 1fr auto auto; align-items: center; gap: 0.5rem 0.85rem;
+  padding: 0.6rem 0; border-top: 1px solid var(--border-soft);
+}
+.dc-plan-row input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+.dc-plan-tooth {
+  background: var(--surface-2); color: var(--text-1); border: 1px solid var(--border);
+  padding: 0.25rem 0.55rem; border-radius: 8px; font-size: 0.85rem; font-variant-numeric: tabular-nums; min-width: 2.6rem;
+}
+.dc-plan-tooth:hover { background: var(--accent-light); color: var(--accent-text); border-color: var(--accent); }
+.dc-plan-name { color: var(--text-1); font-weight: 560; min-width: 0; }
+.dc-plan-price { font-variant-numeric: tabular-nums; color: var(--text-1); }
+.dc-state { border-radius: var(--radius-full); padding: 0.18rem 0.65rem; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.dc-state-planned { background: var(--accent-light); color: var(--accent-text); }
+.dc-state-billed  { background: var(--warning-light); color: var(--warning-text); }
+.dc-state-done    { background: var(--success-light); color: var(--success-text); }
+
+/* Records modal: tabs and the wider chart layout */
+.rec-modal.rec-modal-wide { max-width: 980px; }
+.rec-tabs { display: flex; gap: 0.25rem; padding: 0.85rem 1.5rem 0; border-bottom: 1px solid var(--border); }
+.rec-tabs button {
+  background: transparent; color: var(--text-2); border: none; border-bottom: 2.5px solid transparent;
+  border-radius: 0; padding: 0.55rem 0.8rem 0.6rem; font-size: 0.95rem; font-weight: 580; margin-bottom: -1px;
+}
+.rec-tabs button:hover { background: transparent; color: var(--text-1); }
+.rec-tabs button[aria-selected="true"] { color: var(--accent-text); border-bottom-color: var(--accent); }
+
+@media (min-width: 760px) {
+  .tooth-panel-grid { grid-template-columns: 1.15fr 1fr; gap: 1.75rem; }
+}
+
+/* Phones: each arch splits into its right and left halves, eight teeth per line */
+@media (max-width: 620px) {
+  .dc-wrap { padding: 0.9rem 1rem 1.25rem; }
+  .dc-side-labels { display: none; }
+  .dc-arch { flex-wrap: wrap; row-gap: 0.4rem; }
+  .dc-half { flex-basis: 100%; justify-content: center; padding: 0; border: none; position: relative; padding-top: 1.05rem; }
+  .dc-half::before {
+    content: attr(data-label); position: absolute; left: 0.25rem; top: 0;
+    font-size: 0.75rem; color: var(--text-3); font-weight: 560;
+  }
+  .tooth-btn { max-width: 42px; }
+  .dc-plan-row { grid-template-columns: auto auto 1fr auto; }
+  .dc-plan-row .dc-state { grid-column: 3 / -1; justify-self: start; }
+}
