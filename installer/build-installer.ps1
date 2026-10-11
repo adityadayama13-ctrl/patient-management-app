@@ -43,7 +43,7 @@ try {
 Step "Staging files"
 if (Test-Path $Stage) { Remove-Item $Stage -Recurse -Force }
 New-Item -ItemType Directory -Path $Stage | Out-Null
-foreach ($f in "server.js", "package.json", "package-lock.json", "setup.ps1", "start.bat", "setup-firewall.bat", "README.txt", ".env.example") {
+foreach ($f in "server.js", "auth.js", "package.json", "package-lock.json", "setup.ps1", "start.bat", "setup-firewall.bat", "README.txt", ".env.example") {
     Copy-Item (Join-Path $Root $f) $Stage
 }
 New-Item -ItemType Directory -Path (Join-Path $Stage "config") | Out-Null

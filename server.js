@@ -9,6 +9,7 @@ const { Op } = require('sequelize');
 const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
+const { requireAuth, router: authRouter, revokeUserSessions } = require('./auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +20,10 @@ app.use(cors({
   origin: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : false,
 }));
 app.use(express.json({ limit: '2mb' }));
+
+// Sign-in and role checks for every /api and /uploads request (see auth.js)
+app.use(requireAuth);
+app.use(authRouter);
 
 // ── File upload (lab results) ─────────────────────────────────────────────────
 const UPLOADS_DIR = path.join(__dirname, 'uploads', 'labs');
@@ -644,21 +649,9 @@ function startWhatsAppScheduler() {
   console.log('WhatsApp scheduler started (daily 9:00 AM IST)');
 }
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+// ── Users (Admin only, enforced in auth.js) ───────────────────────────────────
+// Sign-in, sign-out and role permissions live in auth.js.
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Username and password required.' });
-    const user = await User.findOne({ where: { username: username.trim().toLowerCase() } });
-    if (!user || !user.active) return res.status(401).json({ error: 'Invalid credentials.' });
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ error: 'Invalid credentials.' });
-    res.json({ id: user.id, name: user.name, username: user.username, role: user.role });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// GET all users (Admin only — enforced on frontend; basic list for management)
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.findAll({ attributes: ['id', 'name', 'username', 'role', 'active'], order: [['name', 'ASC']] });
@@ -683,13 +676,23 @@ app.put('/api/users/:id', async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found.' });
     const { name, username, password, role, active } = req.body;
+    const losingAdmin = user.role === 'Admin' && user.active && ((role && role !== 'Admin') || active === false);
+    if (losingAdmin) {
+      const adminCount = await User.count({ where: { role: 'Admin', active: true } });
+      if (adminCount <= 1) return res.status(400).json({ error: 'Keep at least one active Admin account.' });
+    }
     const patch = {};
     if (name)     patch.name   = name;
     if (username) patch.username = username.trim().toLowerCase();
     if (role)     patch.role   = role;
     if (active !== undefined) patch.active = active;
     if (password) patch.passwordHash = await bcrypt.hash(password, 10);
+    const signOutElsewhere = (role && role !== user.role) || !!patch.passwordHash || (active === false && user.active);
     await user.update(patch);
+    // A new role, password or deactivation signs the user out on their other devices
+    if (signOutElsewhere) {
+      await revokeUserSessions(user.id, user.id === req.user.id ? req.sessionId : undefined);
+    }
     res.json({ id: user.id, name: user.name, username: user.username, role: user.role, active: user.active });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -703,6 +706,7 @@ app.delete('/api/users/:id', async (req, res) => {
       const adminCount = await User.count({ where: { role: 'Admin', active: true } });
       if (adminCount <= 1) return res.status(400).json({ error: 'Cannot delete the last Admin account.' });
     }
+    await revokeUserSessions(user.id);
     await user.destroy();
     res.json({ message: 'Deleted' });
   } catch (err) { res.status(500).json({ error: err.message }); }

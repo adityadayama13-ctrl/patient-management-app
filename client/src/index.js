@@ -9,6 +9,19 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// The server answers 401 once a session has ended (idle too long, signed out
+// elsewhere, or the user was deactivated). Rather than handle that at every
+// fetch call, tell the app once so it can return to the sign-in screen.
+const nativeFetch = window.fetch.bind(window);
+window.fetch = async (input, init) => {
+  const res = await nativeFetch(input, init);
+  const url = typeof input === 'string' ? input : input.url;
+  if (res.status === 401 && url.startsWith('/api/') && !url.startsWith('/api/auth/login')) {
+    window.dispatchEvent(new Event('clinic:signed-out'));
+  }
+  return res;
+};
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

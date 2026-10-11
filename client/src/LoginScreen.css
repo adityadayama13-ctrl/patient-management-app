@@ -39,6 +39,14 @@
 .login-title { font-size: 1.75rem; }
 .login-sub { color: var(--text-2); margin-top: 0.35rem; }
 
+.login-notice {
+  background: var(--accent-light);
+  color: var(--accent-text);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
 .login-error {
   background: var(--danger-light);
   color: var(--danger-text);
