@@ -53,6 +53,10 @@ for %%S in (postgresql-17 postgresql-16 postgresql-15 postgresql-14 postgresql-1
 )
 :pg_done
 
+:: Single-PC installs (HOST=127.0.0.1 in .env) skip the network addresses
+findstr /b /c:"HOST=127.0.0.1" .env >nul 2>&1
+if not errorlevel 1 goto :standalone
+
 :: Get local IP
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
     set RAW=%%a
@@ -78,5 +82,24 @@ echo.
 echo   Press Ctrl+C to stop the server.
 echo ============================================
 echo.
+
+:: Open the app in the default browser once the server has had a moment to start
+start "" /min cmd /c "timeout /t 4 /nobreak >nul & start http://localhost:5000"
+
+"%NODE_EXE%" server.js
+goto :eof
+
+:standalone
+echo ============================================
+echo   App is running!
+echo.
+echo   Open it at:  http://localhost:5000
+echo.
+echo   Keep this window open while you use the app.
+echo   Close it to stop the app.
+echo ============================================
+echo.
+
+start "" /min cmd /c "timeout /t 4 /nobreak >nul & start http://localhost:5000"
 
 "%NODE_EXE%" server.js

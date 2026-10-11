@@ -29,3 +29,7 @@ Thumbs.db
 # Claude Code internal
 .claude/
 runtime/
+
+# Installer build output
+installer/stage/
+installer/Output/
