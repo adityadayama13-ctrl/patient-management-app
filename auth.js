@@ -46,6 +46,10 @@ const RULES = [
   ['GET',  /^\/api\/patients\/\d+\/records$/, ['medicalRecords', 'billing']],
   ['*',    /^\/api\/(patients\/\d+\/records|records\/\d+)$/, ['medicalRecords']],
 
+  // The dental chart is part of the clinical record; turning a plan into an estimate is billing
+  ['POST', /^\/api\/patients\/\d+\/dental\/estimate$/, ['billing']],
+  ['*',    /^\/api\/(patients\/\d+\/dental(\/(dentition|conditions|treatments))?|dental\/(conditions|treatments)\/\d+)$/, ['medicalRecords']],
+
   ['GET',  /^\/api\/services$/, ANY],
   ['*',    /^\/api\/services(\/\d+)?$/, ['billing']],
   ['*',    /^\/api\/(bills|payments)(\/|$)/, ['billing']],

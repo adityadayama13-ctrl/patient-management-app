@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
     allergies:          { type: DataTypes.TEXT },
     currentMedications: { type: DataTypes.TEXT },
     medicalConditions:  { type: DataTypes.TEXT },
+    dentition:          { type: DataTypes.STRING },   // dental chart: 'Adult' | 'Child' | 'Mixed'; unset = by age
   }, {
     sequelize,
     modelName: 'Patient',

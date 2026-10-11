@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Icon from './icons';
+import DentalChart from './DentalChart';
 import './PatientRegistration.css';
 import './PatientRecordsModal.css';
 
@@ -309,7 +310,8 @@ function RecordCard({ record, onEdit, onDelete }) {
   );
 }
 
-export default function PatientRecordsModal({ patient, onClose }) {
+export default function PatientRecordsModal({ patient, onClose, canBilling, currency }) {
+  const [tab, setTab] = useState('visits'); // 'visits' | 'chart'
   const [records, setRecords] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -351,13 +353,22 @@ export default function PatientRecordsModal({ patient, onClose }) {
 
   return (
     <div className="reg-overlay">
-      <div className="reg-modal rec-modal">
+      <div className={`reg-modal rec-modal${tab === 'chart' ? ' rec-modal-wide' : ''}`}>
         <div className="reg-header">
           <h2>Medical records for {patient.firstName} {patient.lastName}</h2>
           <button className="reg-close" onClick={onClose} type="button" aria-label="Close"><Icon name="close" size={18} /></button>
         </div>
 
-        {view === 'list' && (
+        <div className="rec-tabs" role="tablist" aria-label="Record type">
+          <button type="button" role="tab" aria-selected={tab === 'visits'} onClick={() => setTab('visits')}>Visit records</button>
+          <button type="button" role="tab" aria-selected={tab === 'chart'} onClick={() => setTab('chart')}>Dental chart</button>
+        </div>
+
+        {tab === 'chart' && (
+          <DentalChart patient={patient} services={services} canBilling={canBilling} currency={currency} />
+        )}
+
+        {tab === 'visits' && view === 'list' && (
           <div className="rec-list-view">
             <div className="rec-list-toolbar">
               <span className="rec-count">{records.length} record{records.length !== 1 ? 's' : ''}</span>
@@ -376,7 +387,7 @@ export default function PatientRecordsModal({ patient, onClose }) {
           </div>
         )}
 
-        {(view === 'add' || view === 'edit') && (
+        {tab === 'visits' && (view === 'add' || view === 'edit') && (
           <RecordForm
             initial={view === 'edit' ? editingRecord : null}
             patientId={patient.id}

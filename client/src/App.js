@@ -872,6 +872,8 @@ function AppShell({ currentUser, role, onLogout }) {
       {recordsPatient && (
         <PatientRecordsModal
           patient={recordsPatient}
+          canBilling={can(rolePerms, role, 'billing')}
+          currency={profile.currency || '₹'}
           onClose={() => setRecordsPatient(null)}
         />
       )}
